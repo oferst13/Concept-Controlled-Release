@@ -1,14 +1,16 @@
 import numpy as np
+from collections import namedtuple
 
 
 def tank_fill(tank_storage, rain, tank_size):
-    overflows = np.zeros_like(tank_size)
+    overflows = np.zeros_like(tank_size, dtype=float)
     for tank_num, tank in enumerate(tank_size):
         tank_storage[tank_num] = tank_storage[tank_num] + rain[tank_num]
         if tank_storage[tank_num] > tank:
             overflows[tank_num] = tank_storage[tank_num] - tank
             tank_storage[tank_num] = tank
-    return tank_storage, overflows
+        res = namedtuple("tank_overflows", ["tank_storage", "overflows"])
+    return res(tank_storage, overflows)
 
 
 dt = 30
@@ -20,8 +22,8 @@ t = np.linspace(0, sim_len, num=sim_len + 1)
 t = t.astype(int)
 
 tank_size = np.array([2, 2, 2])
-tank_storage = np.zeros_like(tank_size)
-roof = np.array([1000, 1000, 1000])
+tank_storage = np.zeros_like(tank_size, dtype=float)
+roof = np.array([1100, 1100, 1100])
 
 tank_outlets = np.array([500, 500, 500])
 tank_Ds = np.array([0.2, 0.2, 0.2])
@@ -42,7 +44,15 @@ rain = np.array([])
 for rain_I in rain_10min:
     rain = np.append(rain, np.ones(int(rain_size)) * rain_I)
 rain = np.append(rain, np.zeros(sim_len - len(rain)))
-rain_volume = np.matmul(np.reshape(roof,(len(roof), 1)), np.reshape(rain,(1, len(rain)))) / 1000
-tank_storage, overflows = tank_fill(tank_storage, rain, tank_size)
+rain_volume = np.matmul(np.reshape(roof, (len(roof), 1)), np.reshape(rain,(1, len(rain)))) / 1000
+overflows = np.array([], dtype=float).reshape(len(tank_size), 0,)
+
+for i in range(sim_len):
+    fill_result = tank_fill(tank_storage, rain_volume[:, i], tank_size)
+    tank_storage = fill_result.tank_storage
+    overflows = np.concatenate((overflows, np.reshape(fill_result.overflows, (len(fill_result.overflows), 1))), axis=1)
+
+
+
 print(rain_volume)
 
