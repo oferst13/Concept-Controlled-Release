@@ -74,7 +74,7 @@ for i in range(1, sim_len):
         pipe_A[j, i, 1] = pipe_A[j, i-1, 1] - constants * (((pipe_A[j, i, 0] + pipe_A[j, i-1, 1]) / 2) ** (beta - 1)) * (pipe_A[j, i-1, 1] - pipe_A[j, i, 0])
         #print(str(i) + ' ' + str(j) + ' ' + str(pipe_A[j, i, 1]) + ' ')
         pipe_Q[j, i, 1] = pipe_alphas[j] * (pipe_A[j, i, 1] ** beta)
-        b=1
+
 
 print(rain_volume)
 
