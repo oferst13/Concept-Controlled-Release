@@ -51,7 +51,7 @@ overflows = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
 outlet_A = np.zeros((len(tank_outlets), sim_len, 2), dtype=np.longfloat)
 outlet_Q = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
 pipe_A = np.zeros((len(pipes_L), sim_len, 2), dtype=np.longfloat)
-pipe_Q = pipe_A
+pipe_Q = np.zeros((len(pipes_L), sim_len, 2), dtype=np.longfloat)
 
 warning = 0
 
@@ -61,7 +61,7 @@ for i in range(1, sim_len):
     overflows[:, i] = fill_result.overflows
     outlet_A[:, i, 0] = ((overflows[:, i] / dt) / tank_alphas) ** (1/beta)
     for j in range(len(tank_outlets)):
-        outlet_A[j, i, 1] = outlet_A[j, i-1, 1] - tank_alphas[j] * beta * (dt / tank_outlets[j]) * (((outlet_A[j, i - 1, 0] + outlet_A[j, i-1, 1]) / 2.0) ** (beta - 1)) * (outlet_A[j, i-1, 1] - outlet_A[j, i - 1, 0])
+        outlet_A[j, i, 1] = outlet_A[j, i-1, 1] - tank_alphas[j] * beta * (dt / tank_outlets[j]) * (((outlet_A[j, i, 0] + outlet_A[j, i-1, 1]) / 2.0) ** (beta - 1)) * (outlet_A[j, i-1, 1] - outlet_A[j, i, 0])
     outlet_Q[:, i] = tank_alphas * (outlet_A[:, i, 1] ** beta)
     for j in range(len(pipes_L)):
         if j > 0:
@@ -70,8 +70,9 @@ for i in range(1, sim_len):
             pipe_Q[j, i, 0] = outlet_Q[j, i]
         pipe_A[j, i, 0] = (pipe_Q[j, i, 0] / pipe_alphas[j]) ** (1/beta)
         constants = pipe_alphas[j] * beta * (dt / pipes_L[j])
-        pipe_A[j, i, 1] = pipe_A[j, i-1, 1] - constants * (((pipe_A[j, i-1, 0] + pipe_A[j, i-1, 1]) / 2) ** (beta - 1)) * (pipe_A[j, i-1, 1] - pipe_A[j, i-1, 0])
-        print(str(i) + ' ' + str(j) + ' ' + str(pipe_A[j, i, 1]))
+        print(str(pipe_A[j, i, 0] + pipe_A[j, i-1, 1]) + ' ' +str(pipe_A[j, i-1, 1] - pipe_A[j, i, 0]))
+        pipe_A[j, i, 1] = pipe_A[j, i-1, 1] - constants * (((pipe_A[j, i, 0] + pipe_A[j, i-1, 1]) / 2) ** (beta - 1)) * (pipe_A[j, i-1, 1] - pipe_A[j, i, 0])
+        #print(str(i) + ' ' + str(j) + ' ' + str(pipe_A[j, i, 1]) + ' ')
         pipe_Q[j, i, 1] = pipe_alphas[j] * (pipe_A[j, i, 1] ** beta)
         b=1
 
