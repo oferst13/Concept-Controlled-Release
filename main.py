@@ -1,6 +1,6 @@
-import numpy
 import numpy as np
 from collections import namedtuple
+import matplotlib.pyplot as plt
 
 
 def tank_fill(tank_storage, rain, tank_size):
@@ -70,11 +70,16 @@ for i in range(1, sim_len):
             pipe_Q[j, i, 0] = outlet_Q[j, i]
         pipe_A[j, i, 0] = (pipe_Q[j, i, 0] / pipe_alphas[j]) ** (1/beta)
         constants = pipe_alphas[j] * beta * (dt / pipes_L[j])
-        print(str(pipe_A[j, i, 0] + pipe_A[j, i-1, 1]) + ' ' +str(pipe_A[j, i-1, 1] - pipe_A[j, i, 0]))
         pipe_A[j, i, 1] = pipe_A[j, i-1, 1] - constants * (((pipe_A[j, i, 0] + pipe_A[j, i-1, 1]) / 2) ** (beta - 1)) * (pipe_A[j, i-1, 1] - pipe_A[j, i, 0])
-        #print(str(i) + ' ' + str(j) + ' ' + str(pipe_A[j, i, 1]) + ' ')
         pipe_Q[j, i, 1] = pipe_alphas[j] * (pipe_A[j, i, 1] ** beta)
-        b=1
+
+plt.figure()
+line_objects = plt.plot(t[0:-1]/2, np.transpose(pipe_Q[:, :, 1]))
+plt.gca().set_prop_cycle(None)
+line_objects.extend(plt.plot(t[0:-1]/2, np.transpose(pipe_Q[:, :, 0]), '-.', linewidth=1))
+plt.ylabel('Q (' + r'$m^3$' + '/s)')
+plt.xlabel('t (minutes)')
+plt.legend(line_objects, ('Pipe 1 - outflow', 'Pipe 2 - outflow', 'Pipe 3 - outflow', 'Pipe 1 - inflow', 'Pipe 2 - inflow', 'Pipe 3 - inflow'))
 
 print(rain_volume)
 
