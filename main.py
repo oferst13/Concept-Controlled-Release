@@ -26,6 +26,13 @@ tank_size = np.array([2, 2, 2])
 tank_storage = np.zeros_like(tank_size, dtype=np.longfloat)
 roof = np.array([1000, 1000, 1000])
 
+demand_dt = 3*60*60
+demands_3h = np.array([5, 3, 20, 15, 12, 15, 18, 12])
+demands_PD = 33
+demands = np.array([])
+for demand in demands_3h:
+    demands = np.append(demands, np.ones(int(demand_dt/dt)) * (demand * (dt/demand_dt)))
+demands = demands * demands_PD / 100
 tank_outlets = np.array([500, 500, 500])
 tank_Ds = np.array([0.2, 0.2, 0.2])
 tank_slopes = np.array([0.02, 0.02, 0.02])
