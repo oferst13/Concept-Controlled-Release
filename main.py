@@ -10,21 +10,44 @@ def tank_fill(tank_storage, rain, tank_size):
         if tank_storage[tank_num] > tank:
             overflows[tank_num] = tank_storage[tank_num] - tank
             tank_storage[tank_num] = tank
-        res = namedtuple("tank_overflows", ["tank_storage", "overflows"])
-    return res(tank_storage, overflows)
+    fill_res = namedtuple("tank_overflows", ["tank_storage", "overflows"])
+    return fill_res(tank_storage, overflows)
 
+
+def rw_use(tank_storage, demand):
+    use = np.zeros_like(tank_size, dtype=float)
+    for tank_num, tank in enumerate(tank_storage):
+        if tank_storage[tank_num] - demand[tank_num] < 0:
+            use[tank_num] = tank_storage[tank_num]
+            tank_storage[tank_num] = 0
+        else:
+            use[tank_num] = demand[tank_num]
+            tank_storage[tank_num] = tank_storage[tank_num] - demand[tank_num]
+    use_res = namedtuple("water_use", ["tank_storage", "rainW_use"])
+    return use_res(tank_storage, use)
 
 dt = 30
 rain_dt = 600
 beta = 5 / 4
 manning = 0.012
 sim_len = 600
+# sim_len = int(24 * 60 * 60 / dt)
 t = np.linspace(0, sim_len, num=sim_len + 1)
 t = t.astype(int)
 
 tank_size = np.array([2, 2, 2])
 tank_storage = np.zeros_like(tank_size, dtype=np.longfloat)
 roof = np.array([1000, 1000, 1000])
+dwellers = np.array([10, 10, 10])
+
+demand_dt = 3 * 60 * 60
+demands_3h = np.array([5, 3, 20, 15, 12, 15, 18, 12])
+demands_PD = 33
+demands = np.array([])
+for demand in demands_3h:
+    demands = np.append(demands, np.ones(int(demand_dt / dt)) * (demand * (dt / demand_dt)))
+demands = demands * demands_PD / 100
+demand_volume = np.matmul(np.reshape(dwellers, (len(dwellers), 1)), np.reshape(demands, (1, len(demands)))) / 1000
 
 tank_outlets = np.array([500, 500, 500])
 tank_Ds = np.array([0.2, 0.2, 0.2])
@@ -47,6 +70,7 @@ for rain_I in rain_10min:
 rain = np.append(rain, np.zeros(sim_len - len(rain)))
 rain_volume = np.matmul(np.reshape(roof, (len(roof), 1)), np.reshape(rain, (1, len(rain)))) / 1000
 overflows = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
+rainW_use = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
 
 outlet_A = np.zeros((len(tank_outlets), sim_len, 2), dtype=np.longfloat)
 outlet_Q = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
@@ -59,27 +83,35 @@ for i in range(1, sim_len):
     fill_result = tank_fill(tank_storage, rain_volume[:, i], tank_size)
     tank_storage = fill_result.tank_storage
     overflows[:, i] = fill_result.overflows
-    outlet_A[:, i, 0] = ((overflows[:, i] / dt) / tank_alphas) ** (1/beta)
+    use_result = rw_use(tank_storage, demand_volume[:, i])
+    tank_storage = use_result.tank_storage
+    rainW_use[:, i] = use_result.rainW_use
+    outlet_A[:, i, 0] = ((overflows[:, i] / dt) / tank_alphas) ** (1 / beta)
     for j in range(len(tank_outlets)):
-        outlet_A[j, i, 1] = outlet_A[j, i-1, 1] - tank_alphas[j] * beta * (dt / tank_outlets[j]) * (((outlet_A[j, i, 0] + outlet_A[j, i-1, 1]) / 2.0) ** (beta - 1)) * (outlet_A[j, i-1, 1] - outlet_A[j, i, 0])
+        constants = tank_alphas[j] * beta * (dt / tank_outlets[j])
+        outlet_A[j, i, 1] = outlet_A[j, i - 1, 1] - constants * (((outlet_A[j, i, 0] + outlet_A[j, i - 1, 1]) / 2.0) \
+                                                                 ** (beta - 1)) * (
+                                        outlet_A[j, i - 1, 1] - outlet_A[j, i, 0])
     outlet_Q[:, i] = tank_alphas * (outlet_A[:, i, 1] ** beta)
     for j in range(len(pipes_L)):
         if j > 0:
-            pipe_Q[j, i, 0] = pipe_Q[j-1, i, 1] + outlet_Q[j, i]
+            pipe_Q[j, i, 0] = pipe_Q[j - 1, i, 1] + outlet_Q[j, i]
         else:
             pipe_Q[j, i, 0] = outlet_Q[j, i]
-        pipe_A[j, i, 0] = (pipe_Q[j, i, 0] / pipe_alphas[j]) ** (1/beta)
+        pipe_A[j, i, 0] = (pipe_Q[j, i, 0] / pipe_alphas[j]) ** (1 / beta)
         constants = pipe_alphas[j] * beta * (dt / pipes_L[j])
-        pipe_A[j, i, 1] = pipe_A[j, i-1, 1] - constants * (((pipe_A[j, i, 0] + pipe_A[j, i-1, 1]) / 2) ** (beta - 1)) * (pipe_A[j, i-1, 1] - pipe_A[j, i, 0])
+        pipe_A[j, i, 1] = pipe_A[j, i - 1, 1] - constants * (
+                    ((pipe_A[j, i, 0] + pipe_A[j, i - 1, 1]) / 2) ** (beta - 1)) * \
+                          (pipe_A[j, i - 1, 1] - pipe_A[j, i, 0])
         pipe_Q[j, i, 1] = pipe_alphas[j] * (pipe_A[j, i, 1] ** beta)
 
 plt.figure()
-line_objects = plt.plot(t[0:-1]/2, np.transpose(pipe_Q[:, :, 1]))
+line_objects = plt.plot(t[0:-1] / 2, np.transpose(pipe_Q[:, :, 1]))
 plt.gca().set_prop_cycle(None)
-line_objects.extend(plt.plot(t[0:-1]/2, np.transpose(pipe_Q[:, :, 0]), '-.', linewidth=1))
+line_objects.extend(plt.plot(t[0:-1] / 2, np.transpose(pipe_Q[:, :, 0]), '-.', linewidth=1))
 plt.ylabel('Q (' + r'$m^3$' + '/s)')
 plt.xlabel('t (minutes)')
-plt.legend(line_objects, ('Pipe 1 - outflow', 'Pipe 2 - outflow', 'Pipe 3 - outflow', 'Pipe 1 - inflow', 'Pipe 2 - inflow', 'Pipe 3 - inflow'))
+plt.legend(line_objects, ('Pipe 1 - outflow', 'Pipe 2 - outflow', 'Pipe 3 - outflow', 'Pipe 1 - inflow', \
+                          'Pipe 2 - inflow', 'Pipe 3 - inflow'))
 
 print(rain_volume)
-
