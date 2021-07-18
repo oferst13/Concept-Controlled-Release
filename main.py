@@ -26,6 +26,7 @@ def rw_use(tank_storage, demand):
     use_res = namedtuple("water_use", ["tank_storage", "rainW_use"])
     return use_res(tank_storage, use)
 
+
 dt = 30
 rain_dt = 600
 beta = 5 / 4
@@ -35,10 +36,10 @@ sim_len = 600
 t = np.linspace(0, sim_len, num=sim_len + 1)
 t = t.astype(int)
 
-tank_size = np.array([2, 2, 2])
+tank_size = np.array([20, 20, 20])
 tank_storage = np.zeros_like(tank_size, dtype=np.longfloat)
 roof = np.array([1000, 1000, 1000])
-dwellers = np.array([10, 10, 10])
+dwellers = np.array([150, 150, 150])
 
 demand_dt = 3 * 60 * 60
 demands_3h = np.array([5, 3, 20, 15, 12, 15, 18, 12])
@@ -71,6 +72,7 @@ rain = np.append(rain, np.zeros(sim_len - len(rain)))
 rain_volume = np.matmul(np.reshape(roof, (len(roof), 1)), np.reshape(rain, (1, len(rain)))) / 1000
 overflows = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
 rainW_use = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
+tank_storage_all = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
 
 outlet_A = np.zeros((len(tank_outlets), sim_len, 2), dtype=np.longfloat)
 outlet_Q = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
@@ -86,12 +88,13 @@ for i in range(1, sim_len):
     use_result = rw_use(tank_storage, demand_volume[:, i])
     tank_storage = use_result.tank_storage
     rainW_use[:, i] = use_result.rainW_use
+    tank_storage_all[:, i] = tank_storage
     outlet_A[:, i, 0] = ((overflows[:, i] / dt) / tank_alphas) ** (1 / beta)
     for j in range(len(tank_outlets)):
         constants = tank_alphas[j] * beta * (dt / tank_outlets[j])
         outlet_A[j, i, 1] = outlet_A[j, i - 1, 1] - constants * (((outlet_A[j, i, 0] + outlet_A[j, i - 1, 1]) / 2.0) \
                                                                  ** (beta - 1)) * (
-                                        outlet_A[j, i - 1, 1] - outlet_A[j, i, 0])
+                                    outlet_A[j, i - 1, 1] - outlet_A[j, i, 0])
     outlet_Q[:, i] = tank_alphas * (outlet_A[:, i, 1] ** beta)
     for j in range(len(pipes_L)):
         if j > 0:
@@ -101,7 +104,7 @@ for i in range(1, sim_len):
         pipe_A[j, i, 0] = (pipe_Q[j, i, 0] / pipe_alphas[j]) ** (1 / beta)
         constants = pipe_alphas[j] * beta * (dt / pipes_L[j])
         pipe_A[j, i, 1] = pipe_A[j, i - 1, 1] - constants * (
-                    ((pipe_A[j, i, 0] + pipe_A[j, i - 1, 1]) / 2) ** (beta - 1)) * \
+                ((pipe_A[j, i, 0] + pipe_A[j, i - 1, 1]) / 2) ** (beta - 1)) * \
                           (pipe_A[j, i - 1, 1] - pipe_A[j, i, 0])
         pipe_Q[j, i, 1] = pipe_alphas[j] * (pipe_A[j, i, 1] ** beta)
 
