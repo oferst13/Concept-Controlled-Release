@@ -31,8 +31,8 @@ dt = 30
 rain_dt = 600
 beta = 5 / 4
 manning = 0.012
-sim_len = 600
-# sim_len = int(24 * 60 * 60 / dt)
+#sim_len = (60 / dt) * 24
+sim_len = int(24 * 60 * 60 / dt)
 t = np.linspace(0, sim_len, num=sim_len + 1)
 t = t.astype(int)
 
@@ -62,13 +62,14 @@ pipe_slopes = np.array([0.02, 0.02, 0.02])
 pipe_alphas = (0.501 / manning) * (pipe_Ds ** (1 / 6)) * (pipe_slopes ** 0.5)
 c_pipes = pipes_L / dt
 
-rain_10min = np.linspace(0, 0.6, 4)
+rain_10min = np.linspace(0, 0.4, 4)
 rain_10min = np.append(rain_10min, np.flip(rain_10min))
 rain_size = rain_dt / dt
 rain = np.array([])
 for rain_I in rain_10min:
     rain = np.append(rain, np.ones(int(rain_size)) * rain_I)
-rain = np.append(np.zeros(sim_len - len(rain)), rain)
+rain = np.append(np.zeros(int((sim_len - len(rain)) / 2)), rain)
+rain = np.append(rain, np.zeros(sim_len - len(rain)))
 rain_volume = np.matmul(np.reshape(roof, (len(roof), 1)), np.reshape(rain, (1, len(rain)))) / 1000
 overflows = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
 rainW_use = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
@@ -82,6 +83,8 @@ pipe_Q = np.zeros((len(pipes_L), sim_len, 2), dtype=np.longfloat)
 warning = 0
 
 for i in range(1, sim_len):
+    if sum(tank_storage) == 0 and sum(rain[i:-1]) == 0:
+        break
     fill_result = tank_fill(tank_storage, rain_volume[:, i], tank_size)
     tank_storage = fill_result.tank_storage
     overflows[:, i] = fill_result.overflows
