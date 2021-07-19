@@ -68,7 +68,7 @@ rain_size = rain_dt / dt
 rain = np.array([])
 for rain_I in rain_10min:
     rain = np.append(rain, np.ones(int(rain_size)) * rain_I)
-rain = np.append(rain, np.zeros(sim_len - len(rain)))
+rain = np.append(np.zeros(sim_len - len(rain)), rain)
 rain_volume = np.matmul(np.reshape(roof, (len(roof), 1)), np.reshape(rain, (1, len(rain)))) / 1000
 overflows = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
 rainW_use = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
