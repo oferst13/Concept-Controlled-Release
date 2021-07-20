@@ -1,6 +1,7 @@
 import numpy as np
 from collections import namedtuple
 import matplotlib.pyplot as plt
+from timer import Timer
 
 
 def tank_fill(tank_storage, rain, tank_size):
@@ -27,12 +28,15 @@ def rw_use(tank_storage, demand):
     return use_res(tank_storage, use)
 
 
+runtime = Timer()
+runtime.start()
 dt = 30
 rain_dt = 600
 beta = 5 / 4
 manning = 0.012
-#sim_len = (60 / dt) * 24
-sim_len = int(24 * 60 * 60 / dt)
+# sim_len = (60 / dt) * 24
+sim_days = 8
+sim_len = int(sim_days * 24 * 60 * 60 / dt)
 t = np.linspace(0, sim_len, num=sim_len + 1)
 t = t.astype(int)
 
@@ -82,17 +86,19 @@ pipe_Q = np.zeros((len(pipes_L), sim_len, 2), dtype=np.longfloat)
 
 warning = 0
 
-for i in range(1, sim_len):
+for i in range(sim_len):
     if sum(tank_storage) == 0 and sum(rain[i:-1]) == 0:
         break
     fill_result = tank_fill(tank_storage, rain_volume[:, i], tank_size)
     tank_storage = fill_result.tank_storage
     overflows[:, i] = fill_result.overflows
-    use_result = rw_use(tank_storage, demand_volume[:, i])
+    use_result = rw_use(tank_storage, demand_volume[:, i % demand_volume.shape[1]])
     tank_storage = use_result.tank_storage
     rainW_use[:, i] = use_result.rainW_use
     tank_storage_all[:, i] = tank_storage
     outlet_A[:, i, 0] = ((overflows[:, i] / dt) / tank_alphas) ** (1 / beta)
+    if i < 1 or sum(sum(outlet_A[:, i, :]))+sum(sum(pipe_Q[:, i, :])) < 1e-6:
+        continue
     for j in range(len(tank_outlets)):
         constants = tank_alphas[j] * beta * (dt / tank_outlets[j])
         outlet_A[j, i, 1] = outlet_A[j, i - 1, 1] - constants * (((outlet_A[j, i, 0] + outlet_A[j, i - 1, 1]) / 2.0) \
@@ -119,5 +125,5 @@ plt.ylabel('Q (' + r'$m^3$' + '/s)')
 plt.xlabel('t (minutes)')
 plt.legend(line_objects, ('Pipe 1 - outflow', 'Pipe 2 - outflow', 'Pipe 3 - outflow', 'Pipe 1 - inflow', \
                           'Pipe 2 - inflow', 'Pipe 3 - inflow'))
-
+runtime.stop()
 print(rain_volume)
