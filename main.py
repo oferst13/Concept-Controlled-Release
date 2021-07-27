@@ -3,7 +3,7 @@ from collections import namedtuple
 import matplotlib.pyplot as plt
 from timer import Timer
 from scipy import integrate
-
+from geneticalgorithm import geneticalgorithm as ga
 
 def tank_fill(tank_storage, rain, tank_size):
     overflows = np.zeros_like(tank_size, dtype=float)
@@ -40,6 +40,8 @@ sim_days = 9
 sim_len = int(sim_days * 24 * 60 * 60 / dt)
 t = np.linspace(0, sim_len, num=sim_len + 1)
 t = t.astype(int)
+hours = t * (dt / 60) / 60
+days = hours / 24
 
 tank_size = np.array([20, 20, 20])
 tank_storage = np.zeros_like(tank_size, dtype=np.longfloat)
@@ -73,7 +75,7 @@ rain_size = rain_dt / dt
 rain = np.array([])
 for rain_I in rain_10min:
     rain = np.append(rain, np.ones(int(rain_size)) * rain_I)
-rain = np.append(np.zeros(int((sim_len - len(rain)) / 2)), rain)
+rain = np.append(np.zeros(int((sim_len - len(rain)) / 4)), rain)
 rain = np.append(rain, np.zeros(sim_len - len(rain)))
 rain_volume = np.matmul(np.reshape(roof, (len(roof), 1)), np.reshape(rain, (1, len(rain)))) / 1000
 overflows = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
@@ -120,11 +122,11 @@ for i in range(sim_len):
         pipe_Q[j, i, 1] = pipe_alphas[j] * (pipe_A[j, i, 1] ** beta)
 
 plt.figure()
-line_objects = plt.plot(t[0:-1] / 2, np.transpose(pipe_Q[:, :, 1]))
+line_objects = plt.plot(hours[0:-1], np.transpose(pipe_Q[:, :, 1]))
 plt.gca().set_prop_cycle(None)
-line_objects.extend(plt.plot(t[0:-1] / 2, np.transpose(pipe_Q[:, :, 0]), '-.', linewidth=1))
+line_objects.extend(plt.plot(hours[0:-1], np.transpose(pipe_Q[:, :, 0]), '-.', linewidth=1))
 plt.ylabel('Q (' + r'$m^3$' + '/s)')
-plt.xlabel('t (minutes)')
+plt.xlabel('t (hours)')
 plt.legend(line_objects, ('Pipe 1 - outflow', 'Pipe 2 - outflow', 'Pipe 3 - outflow', 'Pipe 1 - inflow', \
                           'Pipe 2 - inflow', 'Pipe 3 - inflow'))
 mass_balance_err = 100 * (abs(integrate.simps(pipe_Q[2,:,1] * dt, t[0:-1])-np.sum(overflows)))/np.sum(overflows)
