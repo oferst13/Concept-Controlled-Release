@@ -6,6 +6,7 @@ Pillow==8.3.1
 pyparsing==2.4.7
 python-dateutil==2.8.1
 six==1.16.0
-
 scipy~=1.7.0
 geneticalgorithm~=1.0.2
+
+
