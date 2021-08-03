@@ -129,14 +129,14 @@ print(f"Mass Balance Error: {mass_balance_err:0.2f}%")
 T = i
 max_Q = np.argmax(pipe_Q[2, :, 1])
 zero_Q = (np.asarray(np.nonzero(pipe_Q[2, max_Q:-1, 1] == 0))[0])[0] + max_Q
-plt.figure()
-line_objects = plt.plot(hours[0:zero_Q+1], np.transpose(pipe_Q[2, 0:zero_Q+1, 1]))
+#plt.figure()
+#line_objects = plt.plot(hours[0:zero_Q+1], np.transpose(pipe_Q[2, 0:zero_Q+1, 1]))
 #plt.gca().set_prop_cycle(None)
 #line_objects.extend(plt.plot(hours[0:-1], np.transpose(pipe_Q[:, :, 0]), '-.', linewidth=1))
-plt.ylabel('Q (' + r'$m^3$' + '/s)')
-plt.xlabel('t (hours)')
-plt.legend(line_objects, ('Pipe 1 - outflow', 'Pipe 2 - outflow', 'Pipe 3 - outflow', 'Pipe 1 - inflow', \
-                          'Pipe 2 - inflow', 'Pipe 3 - inflow'))
+#plt.ylabel('Q (' + r'$m^3$' + '/s)')
+#plt.xlabel('t (hours)')
+#plt.legend(line_objects, ('Pipe 1 - outflow', 'Pipe 2 - outflow', 'Pipe 3 - outflow', 'Pipe 1 - inflow', \
+                          #'Pipe 2 - inflow', 'Pipe 3 - inflow'))
 obj_Q = integrate.simps(pipe_Q[2, :zero_Q, 1] * dt, t[:zero_Q]) / (zero_Q * dt)
 to_min = float(0)
 for i in range(zero_Q + 1):
