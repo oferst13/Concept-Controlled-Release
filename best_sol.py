@@ -1,9 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy import integrate
-
 from benchmark import obj_Q, zero_Q, outlet_max_Q, tank_fill, rw_use, pipe_Q as benchmark_Q
-
 from geneticalgorithm import geneticalgorithm as ga
 
 
