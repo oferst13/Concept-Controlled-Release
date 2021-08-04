@@ -124,7 +124,6 @@ plt.legend()
                          # 'Pipe 2 - inflow', 'Pipe 3 - inflow'))
 
 
-
 mass_balance_err = 100 * (abs(integrate.simps(pipe_Q[2, :, 1] * dt, t[0:-1])-(np.sum(overflows)+np.sum(releases)))/
                           (np.sum(overflows) + np.sum(releases)))
 print(f"Mass Balance Error: {mass_balance_err:0.2f}%")
