@@ -1,7 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy import integrate
-from benchmark import obj_Q, zero_Q, outlet_max_Q, tank_fill, rw_use
+from benchmark import obj_Q, zero_Q, outlet_max_Q, tank_fill, rw_use, pipe_Q as benchmark_Q
 from geneticalgorithm import geneticalgorithm as ga
 
 
@@ -111,14 +111,19 @@ for i in range(sim_len):
     if i < zero_Q:
         to_min += abs(pipe_Q[2, i, 1] - obj_Q)
 
-plt.figure()
-line_objects = plt.plot(hours[0:zero_Q+1], np.transpose(pipe_Q[2, 0:zero_Q+1, 1]))
+
+#line_objects = plt.plot(hours[0:zero_Q+1], np.transpose(pipe_Q[2, 0:zero_Q+1, 1], np.transpose(benchmark_Q[2, 0:zero_Q+1, 1])))
 #plt.gca().set_prop_cycle(None)
 #line_objects.extend(plt.plot(hours[0:-1], np.transpose(pipe_Q[:, :, 0]), '-.', linewidth=1))
+plt.plot(hours[0:zero_Q+1], pipe_Q[2, :zero_Q+1, 1], label="optimized outlet flow")
+plt.plot(hours[0:zero_Q+1], benchmark_Q[2, :zero_Q+1, 1], label="benchmark outlet flow")
 plt.ylabel('Q (' + r'$m^3$' + '/s)')
 plt.xlabel('t (hours)')
-plt.legend(line_objects, ('Pipe 1 - outflow', 'Pipe 2 - outflow', 'Pipe 3 - outflow', 'Pipe 1 - inflow', \
-                          'Pipe 2 - inflow', 'Pipe 3 - inflow'))
+plt.legend()
+#plt.legend(line_objects, ('Pipe 1 - outflow', 'Pipe 2 - outflow', 'Pipe 3 - outflow', 'Pipe 1 - inflow', \
+                         # 'Pipe 2 - inflow', 'Pipe 3 - inflow'))
+
+
 
 mass_balance_err = 100 * (abs(integrate.simps(pipe_Q[2, :, 1] * dt, t[0:-1])-(np.sum(overflows)+np.sum(releases)))/
                           (np.sum(overflows) + np.sum(releases)))

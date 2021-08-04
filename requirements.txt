@@ -9,4 +9,3 @@ six==1.16.0
 scipy~=1.7.0
 geneticalgorithm~=1.0.2
 
-

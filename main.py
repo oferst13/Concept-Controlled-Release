@@ -31,9 +31,24 @@ def rw_use(tank_storage, demand):
     return use_res(tank_storage, use)
 
 
+
 def optim(release):
     pass
 
+def rw_use(tank_storage, demand):
+    use = np.zeros_like(tank_storage, dtype=float)
+    for tank_num, tank in enumerate(tank_storage):
+        if tank_storage[tank_num] - demand[tank_num] < 0:
+            use[tank_num] = tank_storage[tank_num]
+            tank_storage[tank_num] = 0
+        else:
+            use[tank_num] = demand[tank_num]
+            tank_storage[tank_num] = tank_storage[tank_num] - demand[tank_num]
+    use_res = namedtuple("water_use", ["tank_storage", "rainW_use"])
+    return use_res(tank_storage, use)
+
+def optim(release):
+    pass
 
 runtime = Timer()
 runtime.start()
