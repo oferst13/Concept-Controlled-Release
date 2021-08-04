@@ -6,6 +6,7 @@ from scipy import integrate
 from geneticalgorithm import geneticalgorithm as ga
 
 
+
 def tank_fill(tank_storage, rain, tank_size):
     overflows = np.zeros_like(tank_size, dtype=float)
     for tank_num, tank in enumerate(tank_size):
@@ -29,9 +30,25 @@ def rw_use(tank_storage, demand):
     use_res = namedtuple("water_use", ["tank_storage", "rainW_use"])
     return use_res(tank_storage, use)
 
+
+
 def optim(release):
     pass
 
+def rw_use(tank_storage, demand):
+    use = np.zeros_like(tank_storage, dtype=float)
+    for tank_num, tank in enumerate(tank_storage):
+        if tank_storage[tank_num] - demand[tank_num] < 0:
+            use[tank_num] = tank_storage[tank_num]
+            tank_storage[tank_num] = 0
+        else:
+            use[tank_num] = demand[tank_num]
+            tank_storage[tank_num] = tank_storage[tank_num] - demand[tank_num]
+    use_res = namedtuple("water_use", ["tank_storage", "rainW_use"])
+    return use_res(tank_storage, use)
+
+def optim(release):
+    pass
 
 runtime = Timer()
 runtime.start()

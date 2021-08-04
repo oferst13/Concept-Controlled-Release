@@ -139,6 +139,7 @@ zero_Q = (np.asarray(np.nonzero(pipe_Q[2, max_Q:-1, 1] == 0))[0])[0] + max_Q
 #plt.legend(line_objects, ('Pipe 1 - outflow', 'Pipe 2 - outflow', 'Pipe 3 - outflow', 'Pipe 1 - inflow', \
                           #'Pipe 2 - inflow', 'Pipe 3 - inflow'))
 
+
 obj_Q = integrate.simps(pipe_Q[2, :zero_Q, 1] * dt, t[:zero_Q]) / (zero_Q * dt)
 to_min = float(0)
 for i in range(zero_Q + 1):
