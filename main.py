@@ -29,7 +29,6 @@ def rw_use(tank_storage, demand):
     use_res = namedtuple("water_use", ["tank_storage", "rainW_use"])
     return use_res(tank_storage, use)
 
-
 def optim(release):
     pass
 
@@ -145,6 +144,7 @@ to_min = float(0)
 for i in range(zero_Q + 1):
     to_min += abs(pipe_Q[2, i, 1] - obj_Q)
 runtime.stop()
+
 
 rr=1
 #print(rain_volume)
