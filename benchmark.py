@@ -3,7 +3,6 @@ from collections import namedtuple
 import matplotlib.pyplot as plt
 from timer import Timer
 from scipy import integrate
-from geneticalgorithm import geneticalgorithm as ga
 
 
 def tank_fill(tank_storage, rain, tank_size):
@@ -121,7 +120,6 @@ for i in range(sim_len):
                 ((pipe_A[j, i, 0] + pipe_A[j, i - 1, 1]) / 2) ** (beta - 1)) * \
                           (pipe_A[j, i - 1, 1] - pipe_A[j, i, 0])
         pipe_Q[j, i, 1] = pipe_alphas[j] * (pipe_A[j, i, 1] ** beta)
-
 
 
 mass_balance_err = 100 * (abs(integrate.simps(pipe_Q[2, :, 1] * dt, t[0:-1])-np.sum(overflows)))/np.sum(overflows)

@@ -2,10 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from scipy import integrate
 from benchmark import obj_Q, zero_Q, outlet_max_Q, tank_fill, rw_use, pipe_Q as benchmark_Q
-from geneticalgorithm import geneticalgorithm as ga
-
-
-release = np.array([9.18735883e-05, 9.92820479e-05, 1.02207092e-04, 1.36659984e-04, 8.33139991e-05, 5.99120096e-05])
+import math
 
 dt = 30
 rain_dt = 600
@@ -23,6 +20,9 @@ tank_size = np.array([20, 20, 20])
 tank_storage = np.array([20, 20, 20], dtype=np.longfloat)
 roof = np.array([1000, 1000, 1000])
 dwellers = np.array([150, 150, 150])
+
+release_hr = math.ceil(zero_Q * (dt / 60) / 60)
+release = np.array([9.18735883e-05, 9.92820479e-05, 1.02207092e-04, 1.36659984e-04, 8.33139991e-05, 5.99120096e-05])
 
 demand_dt = 3 * 60 * 60
 demands_3h = np.array([5, 3, 20, 15, 12, 15, 18, 12])

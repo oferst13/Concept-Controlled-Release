@@ -3,7 +3,6 @@ from collections import namedtuple
 import matplotlib.pyplot as plt
 from timer import Timer
 from scipy import integrate
-from geneticalgorithm import geneticalgorithm as ga
 
 
 def tank_fill(tank_storage, rain, tank_size):
@@ -30,9 +29,6 @@ def rw_use(tank_storage, demand):
     return use_res(tank_storage, use)
 
 
-def optim(release):
-    pass
-
 def rw_use(tank_storage, demand):
     use = np.zeros_like(tank_storage, dtype=float)
     for tank_num, tank in enumerate(tank_storage):
@@ -45,8 +41,6 @@ def rw_use(tank_storage, demand):
     use_res = namedtuple("water_use", ["tank_storage", "rainW_use"])
     return use_res(tank_storage, use)
 
-def optim(release):
-    pass
 
 runtime = Timer()
 runtime.start()
