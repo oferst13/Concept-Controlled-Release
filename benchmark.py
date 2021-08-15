@@ -17,14 +17,14 @@ def tank_fill(tank_storage, rain, tank_size):
 
 
 def rw_use(tank_storage, demand):
-    use = np.zeros_like(tank_storage, dtype=float)
-    for tank_num, tank in enumerate(tank_storage):
-        if tank_storage[tank_num] - demand[tank_num] < 0:
-            use[tank_num] = tank_storage[tank_num]
-            tank_storage[tank_num] = 0
-        else:
-            use[tank_num] = demand[tank_num]
-            tank_storage[tank_num] = tank_storage[tank_num] - demand[tank_num]
+    use = demand
+    tank_storage = tank_storage - demand
+    if len(tank_storage[tank_storage < 0]) > 0:
+        neg_vals = np.where(tank_storage < 0)
+        for val in neg_vals:
+            tank_storage[val] += demand[val]
+            use[val] = tank_storage[val]
+            tank_storage[val] = 0
     use_res = namedtuple("water_use", ["tank_storage", "rainW_use"])
     return use_res(tank_storage, use)
 
@@ -36,7 +36,7 @@ rain_dt = 600
 beta = 5 / 4
 manning = 0.012
 # sim_len = (60 / dt) * 24
-sim_days = 9
+sim_days = 3
 sim_len = int(sim_days * 24 * 60 * 60 / dt)
 t = np.linspace(0, sim_len, num=sim_len + 1)
 t = t.astype(int)
@@ -77,7 +77,7 @@ rain_size = rain_dt / dt
 rain = np.array([])
 for rain_I in rain_10min:
     rain = np.append(rain, np.ones(int(rain_size)) * rain_I)
-rain = np.append(np.zeros(int((sim_len - len(rain)) / 6)), rain)
+rain = np.append(np.zeros(int((sim_len - len(rain)) / 5)), rain)
 rain = np.append(rain, np.zeros(sim_len - len(rain)))
 rain_volume = np.matmul(np.reshape(roof, (len(roof), 1)), np.reshape(rain, (1, len(rain)))) / 1000
 overflows = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
@@ -101,7 +101,7 @@ for i in range(sim_len):
     rainW_use[:, i] = use_result.rainW_use
     tank_storage_all[:, i] = tank_storage
     outlet_A[:, i, 0] = ((overflows[:, i] / dt) / tank_alphas) ** (1 / beta)
-    if i < 1 or (np.sum(pipe_A[:, i-1, :]) + np.sum(outlet_A[:, i-1])) < 1e-6:
+    if i < 1 or (np.sum(pipe_A[:, i-1, :]) + np.sum(outlet_A[:, i-1])) < 1e-5:
         continue
     for j in range(len(tank_outlets)):
         constants = tank_alphas[j] * beta * (dt / tank_outlets[j])

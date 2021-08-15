@@ -3,7 +3,11 @@ from matplotlib import pyplot as plt
 from scipy import integrate
 from benchmark import obj_Q, zero_Q, outlet_max_Q, tank_fill, rw_use, pipe_Q as benchmark_Q
 import math
+from linetimer import CodeTimer
+from timer import Timer
 
+runtime = Timer()
+runtime.start()
 dt = 30
 rain_dt = 600
 beta = 5 / 4
@@ -21,7 +25,7 @@ tank_storage = np.array([20, 20, 20], dtype=np.longfloat)
 roof = np.array([1000, 1000, 1000])
 dwellers = np.array([150, 150, 150])
 
-release_hr = math.ceil(zero_Q * (dt / 60) / 60)
+release_hrs = math.ceil(zero_Q * (dt / 60) / 60)
 release = np.array([9.18735883e-05, 9.92820479e-05, 1.02207092e-04, 1.36659984e-04, 8.33139991e-05, 5.99120096e-05])
 
 demand_dt = 3 * 60 * 60
@@ -72,9 +76,11 @@ pipe_Q = np.zeros((len(pipes_L), sim_len, 2), dtype=np.longfloat)
 
 to_min = 0
 penalty = 0
+runs = 0
 for i in range(sim_len):
     if sum(tank_storage) == 0 and sum(rain[i:-1]) == 0:
         break
+    runs += 1
     if np.sum(rain_volume[:, i]) > 0:
         fill_result = tank_fill(tank_storage, rain_volume[:, i], tank_size)
         tank_storage = fill_result.tank_storage
@@ -97,6 +103,7 @@ for i in range(sim_len):
                                                                  ** (beta - 1)) * (
                                     outlet_A[j, i - 1, 1] - outlet_A[j, i, 0])
     outlet_Q[:, i] = tank_alphas * (outlet_A[:, i, 1] ** beta)
+
     for j in range(len(pipes_L)):
         if j > 0:
             pipe_Q[j, i, 0] = pipe_Q[j - 1, i, 1] + outlet_Q[j, i]
@@ -144,6 +151,7 @@ algorithm_param = {'max_num_iteration': 100,\
 model = ga(function=f, dimension=6, variable_type='real', variable_boundaries=varbound,algorithm_parameters=algorithm_param, function_timeout=15)
 model.run()
 '''
+runtime.stop()
 print('_')
 
 
