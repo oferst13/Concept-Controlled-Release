@@ -4,11 +4,10 @@ from scipy import integrate
 from benchmark import obj_Q, zero_Q, outlet_max_Q, tank_fill, rw_use, pipe_Q as benchmark_Q
 import math
 from linetimer import CodeTimer
+
 with CodeTimer():
-    X = [0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  7.,
-  0.,  5.,  0.,  2.,  0., 0.,  0.,  0.,  0.,  0.,  0.,  5.,  0.,  1.,  0.,  0.,  4.,  0.,
-  5.,  1.,  0.,  0.,  1.,  0.,  0.,  6.,  1.,  1.,  0.,  0.,  0.,  0.,  0.,  1.,  0.,  0.,
-  0.,  0.,  0.,  0.,  0.,  4.,  0.,  0.,  0.,  0.,  0.,  8.,  2.,  0., 10.,]
+    X = [5.,  4.,  2.,  9.,  6.,  7.,  0., 10.,  2., 10.,  1.,  3.,  9.,  5.,  7.,  9.,  4.,  3.,
+        4., 10.,  5.,  3.,  5.,  6.,  4.,  6.,  8.,  1.,  8.,  8.,  8.,  0.,  7.,  1.,  1.,  9.]
     release = np.array(X)
     dt = 30
     rain_dt = 600
@@ -82,7 +81,7 @@ with CodeTimer():
     penalty = 0
     runs = 0
 
-    for i in range(sim_len):
+    for i in range(zero_Q):
         if sum(tank_storage) == 0 and sum(rain[i:-1]) == 0:
             break
         runs += 1
@@ -91,9 +90,12 @@ with CodeTimer():
             tank_storage = fill_result.tank_storage
             overflows[:, i] = fill_result.overflows
         if i < zero_Q:
-            release_Q = tank_orifice_A * Cd * np.sqrt(2*9.81*(tank_storage / tank_A)) * release[:, i // int(60*60/dt)]
-            releases_volume[:, i] = release_Q * dt
-            tank_storage -= release_Q * dt
+            release_Q = tank_orifice_A * Cd * np.sqrt(2 * 9.81 * (tank_storage / tank_A)) * 0.1 * release[:, i // int(
+                60 * 60 / dt)]
+        else:
+            release_Q = 0
+        releases_volume[:, i] = release_Q * dt
+        tank_storage -= release_Q * dt
         if len(tank_storage[tank_storage < 0]) > 0:
             neg_vals = np.where(tank_storage < 0)
             for val in neg_vals:
@@ -104,8 +106,8 @@ with CodeTimer():
         tank_storage = use_result.tank_storage
         rainW_use[:, i] = use_result.rainW_use
         tank_storage_all[:, i] = tank_storage
-        outlet_A[:, i, 0] = np.power((((overflows[:, i] + release_Q*dt) / dt) / tank_alphas), (1 / beta))
-        if i < 1 or (np.sum(pipe_A[:, i-1, :]) + np.sum(outlet_A[:, i-1])) < 1e-6:
+        outlet_A[:, i, 0] = np.power((((overflows[:, i] + release_Q * dt) / dt) / tank_alphas), (1 / beta))
+        if i < 1 or (np.sum(pipe_A[:, i - 1, :]) + np.sum(outlet_A[:, i - 1])) < 1e-6:
             continue
         for j in range(len(tank_outlets)):
             constants = tank_alphas[j] * beta * (dt / tank_outlets[j])
@@ -129,21 +131,21 @@ with CodeTimer():
         if i < zero_Q:
             to_min += abs(pipe_Q[2, i, 1] - obj_Q)
 
-    #line_objects = plt.plot(hours[0:zero_Q+1], np.transpose(pipe_Q[2, 0:zero_Q+1, 1], np.transpose(benchmark_Q[2, 0:zero_Q+1, 1])))
-    #plt.gca().set_prop_cycle(None)
-    #line_objects.extend(plt.plot(hours[0:-1], np.transpose(pipe_Q[:, :, 0]), '-.', linewidth=1))
+    # line_objects = plt.plot(hours[0:zero_Q+1], np.transpose(pipe_Q[2, 0:zero_Q+1, 1], np.transpose(benchmark_Q[2, 0:zero_Q+1, 1])))
+    # plt.gca().set_prop_cycle(None)
+    # line_objects.extend(plt.plot(hours[0:-1], np.transpose(pipe_Q[:, :, 0]), '-.', linewidth=1))
 
-    plt.plot(hours[0:zero_Q+1], pipe_Q[2, :zero_Q+1, 1], label="optimized outlet flow")
-    plt.plot(hours[0:zero_Q+1], benchmark_Q[2, :zero_Q+1, 1], label="benchmark outlet flow")
+    plt.plot(hours[0:zero_Q + 100], pipe_Q[2, :zero_Q + 100, 1], label="optimized outlet flow")
+    plt.plot(hours[0:zero_Q + 100], benchmark_Q[2, :zero_Q + 100, 1], label="benchmark outlet flow")
     plt.ylabel('Q (' + r'$m^3$' + '/s)')
     plt.xlabel('t (hours)')
     plt.legend()
-    #plt.legend(line_objects, ('Pipe 1 - outflow', 'Pipe 2 - outflow', 'Pipe 3 - outflow', 'Pipe 1 - inflow', \
-                             # 'Pipe 2 - inflow', 'Pipe 3 - inflow'))
+    # plt.legend(line_objects, ('Pipe 1 - outflow', 'Pipe 2 - outflow', 'Pipe 3 - outflow', 'Pipe 1 - inflow', \
+    # 'Pipe 2 - inflow', 'Pipe 3 - inflow'))
 
-
-    mass_balance_err = 100 * (abs(integrate.simps(pipe_Q[2, :, 1] * dt, t[0:-1])-(np.sum(overflows)+np.sum(releases_volume)))/
-                              (np.sum(overflows) + np.sum(releases_volume)))
+    mass_balance_err = 100 * (
+                abs(integrate.simps(pipe_Q[2, :, 1] * dt, t[0:-1]) - (np.sum(overflows) + np.sum(releases_volume))) /
+                (np.sum(overflows) + np.sum(releases_volume)))
     print(f"Mass Balance Error: {mass_balance_err:0.2f}%")
     to_min += penalty
     print('_')
@@ -161,12 +163,3 @@ algorithm_param = {'max_num_iteration': 100,\
 model = ga(function=f, dimension=6, variable_type='real', variable_boundaries=varbound,algorithm_parameters=algorithm_param, function_timeout=15)
 model.run()
 '''
-
-
-
-
-
-
-
-
-

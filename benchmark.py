@@ -36,7 +36,7 @@ rain_dt = 600
 beta = 5 / 4
 manning = 0.012
 # sim_len = (60 / dt) * 24
-sim_days = 3
+sim_days = 1
 sim_len = int(sim_days * 24 * 60 * 60 / dt)
 t = np.linspace(0, sim_len, num=sim_len + 1)
 t = t.astype(int)
@@ -44,7 +44,8 @@ hours = t * (dt / 60) / 60
 days = hours / 24
 
 tank_size = np.array([20, 20, 20])
-tank_storage = np.array([20, 20, 20], dtype=np.longfloat)
+tank_init_storage = np.array([20, 20, 20], dtype=np.longfloat)
+tank_storage = tank_init_storage
 roof = np.array([1000, 1000, 1000])
 dwellers = np.array([150, 150, 150])
 
@@ -77,7 +78,7 @@ rain_size = rain_dt / dt
 rain = np.array([])
 for rain_I in rain_10min:
     rain = np.append(rain, np.ones(int(rain_size)) * rain_I)
-rain = np.append(np.zeros(int((sim_len - len(rain)) / 5)), rain)
+rain = np.append(np.zeros(int((sim_len - len(rain)) / 6)), rain)
 rain = np.append(rain, np.zeros(sim_len - len(rain)))
 rain_volume = np.matmul(np.reshape(roof, (len(roof), 1)), np.reshape(rain, (1, len(rain)))) / 1000
 overflows = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
@@ -127,7 +128,12 @@ print(f"Mass Balance Error: {mass_balance_err:0.2f}%")
 T = i
 max_Q = np.argmax(pipe_Q[2, :, 1])
 zero_Q = (np.asarray(np.nonzero(pipe_Q[2, max_Q:-1, 1] == 0))[0])[0] + max_Q
-
+'''
+plt.plot(hours[0:zero_Q+1], pipe_Q[2, :zero_Q+1, 1], label="optimized outlet flow")
+plt.ylabel('Q (' + r'$m^3$' + '/s)')
+plt.xlabel('t (hours)')
+plt.legend()
+'''
 #plt.figure()
 #line_objects = plt.plot(hours[0:zero_Q+1], np.transpose(pipe_Q[2, 0:zero_Q+1, 1]))
 #plt.gca().set_prop_cycle(None)
