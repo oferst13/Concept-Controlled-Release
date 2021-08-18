@@ -1,20 +1,19 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy import integrate
-from benchmark import obj_Q, zero_Q, outlet_max_Q, tank_fill, rw_use, pipe_Q as benchmark_Q
+from benchmark import obj_Q, zero_Q, last_overflow, outlet_max_Q, tank_fill, rw_use, pipe_Q as benchmark_Q
 import math
 from linetimer import CodeTimer
 
 with CodeTimer():
-    X = [5.,  4.,  2.,  9.,  6.,  7.,  0., 10.,  2., 10.,  1.,  3.,  9.,  5.,  7.,  9.,  4.,  3.,
-        4., 10.,  5.,  3.,  5.,  6.,  4.,  6.,  8.,  1.,  8.,  8.,  8.,  0.,  7.,  1.,  1.,  9.]
-    release = np.array(X)
+    X = [1.,  3.,  2.,  2.,  3.,  1.,  2.,  7.,  1.,  5., 10.,  5.,  1.,  4.,  2.]
+    release = np.array(X).copy()
     dt = 30
     rain_dt = 600
     beta = 5 / 4
     manning = 0.012
     # sim_len = (60 / dt) * 24
-    sim_days = 3
+    sim_days = 1
     sim_len = int(sim_days * 24 * 60 * 60 / dt)
     t = np.linspace(0, sim_len, num=sim_len + 1)
     t = t.astype(int)
@@ -26,7 +25,7 @@ with CodeTimer():
     roof = np.array([1000, 1000, 1000])
     dwellers = np.array([150, 150, 150])
 
-    release_hrs = math.ceil(zero_Q * (dt / 60) / 60)
+    release_hrs = math.ceil(last_overflow * (dt / 60) / 60)
     release = release.reshape((len(tank_storage), release_hrs), order='F')
     tank_orifice = np.array([0.05, 0.05, 0.05])
     tank_orifice_A = ((tank_orifice / 2) ** 2) * np.pi
@@ -81,7 +80,7 @@ with CodeTimer():
     penalty = 0
     runs = 0
 
-    for i in range(zero_Q):
+    for i in range(sim_len):
         if sum(tank_storage) == 0 and sum(rain[i:-1]) == 0:
             break
         runs += 1
@@ -89,11 +88,11 @@ with CodeTimer():
             fill_result = tank_fill(tank_storage, rain_volume[:, i], tank_size)
             tank_storage = fill_result.tank_storage
             overflows[:, i] = fill_result.overflows
-        if i < zero_Q:
-            release_Q = tank_orifice_A * Cd * np.sqrt(2 * 9.81 * (tank_storage / tank_A)) * 0.1 * release[:, i // int(
-                60 * 60 / dt)]
+        if i <= last_overflow:
+            release_deg = release[:, i // int(60 * 60 / dt)]
         else:
-            release_Q = 0
+            release_deg = 0.0
+        release_Q = tank_orifice_A * Cd * np.sqrt(2 * 9.81 * (tank_storage / tank_A)) * 0.1 * release_deg
         releases_volume[:, i] = release_Q * dt
         tank_storage -= release_Q * dt
         if len(tank_storage[tank_storage < 0]) > 0:
@@ -107,7 +106,7 @@ with CodeTimer():
         rainW_use[:, i] = use_result.rainW_use
         tank_storage_all[:, i] = tank_storage
         outlet_A[:, i, 0] = np.power((((overflows[:, i] + release_Q * dt) / dt) / tank_alphas), (1 / beta))
-        if i < 1 or (np.sum(pipe_A[:, i - 1, :]) + np.sum(outlet_A[:, i - 1])) < 1e-6:
+        if i < 1 or (np.sum(pipe_A[:, i - 1, :]) + np.sum(outlet_A[:, i - 1])) < 1e-5:
             continue
         for j in range(len(tank_outlets)):
             constants = tank_alphas[j] * beta * (dt / tank_outlets[j])
@@ -128,8 +127,8 @@ with CodeTimer():
                               (pipe_A[j, i - 1, 1] - pipe_A[j, i, 0])
             pipe_Q[j, i, 1] = pipe_alphas[j] * (pipe_A[j, i, 1] ** beta)
 
-        if i < zero_Q:
-            to_min += abs(pipe_Q[2, i, 1] - obj_Q)
+        if i < last_overflow:
+            to_min += np.abs(pipe_Q[2, i, 1] - obj_Q)
 
     # line_objects = plt.plot(hours[0:zero_Q+1], np.transpose(pipe_Q[2, 0:zero_Q+1, 1], np.transpose(benchmark_Q[2, 0:zero_Q+1, 1])))
     # plt.gca().set_prop_cycle(None)
@@ -144,8 +143,8 @@ with CodeTimer():
     # 'Pipe 2 - inflow', 'Pipe 3 - inflow'))
 
     mass_balance_err = 100 * (
-                abs(integrate.simps(pipe_Q[2, :, 1] * dt, t[0:-1]) - (np.sum(overflows) + np.sum(releases_volume))) /
-                (np.sum(overflows) + np.sum(releases_volume)))
+            abs(integrate.simps(pipe_Q[2, :, 1] * dt, t[0:-1]) - (np.sum(overflows) + np.sum(releases_volume))) /
+            (np.sum(overflows) + np.sum(releases_volume)))
     print(f"Mass Balance Error: {mass_balance_err:0.2f}%")
     to_min += penalty
     print('_')

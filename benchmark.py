@@ -122,12 +122,12 @@ for i in range(sim_len):
                           (pipe_A[j, i - 1, 1] - pipe_A[j, i, 0])
         pipe_Q[j, i, 1] = pipe_alphas[j] * (pipe_A[j, i, 1] ** beta)
 
-
+T = i
 mass_balance_err = 100 * (abs(integrate.simps(pipe_Q[2, :, 1] * dt, t[0:-1])-np.sum(overflows)))/np.sum(overflows)
 print(f"Mass Balance Error: {mass_balance_err:0.2f}%")
-T = i
+
 max_Q = np.argmax(pipe_Q[2, :, 1])
-zero_Q = (np.asarray(np.nonzero(pipe_Q[2, max_Q:-1, 1] == 0))[0])[0] + max_Q
+zero_Q = (np.asarray(np.nonzero(pipe_Q[2, max_Q:-1, 1] < 1e-5))[0])[0] + max_Q
 '''
 plt.plot(hours[0:zero_Q+1], pipe_Q[2, :zero_Q+1, 1], label="optimized outlet flow")
 plt.ylabel('Q (' + r'$m^3$' + '/s)')
@@ -143,10 +143,10 @@ plt.legend()
 #plt.legend(line_objects, ('Pipe 1 - outflow', 'Pipe 2 - outflow', 'Pipe 3 - outflow', 'Pipe 1 - inflow', \
                           #'Pipe 2 - inflow', 'Pipe 3 - inflow'))
 
-
-obj_Q = integrate.simps(pipe_Q[2, :zero_Q, 1] * dt, t[:zero_Q]) / (zero_Q * dt)
+last_overflow = np.max(np.nonzero(np.sum(overflows, axis=0)))
+obj_Q = integrate.simps(pipe_Q[2, :zero_Q, 1] * dt, t[:zero_Q]) / (last_overflow * dt)
 to_min = float(0)
-for i in range(zero_Q + 1):
+for i in range(last_overflow):
     to_min += abs(pipe_Q[2, i, 1] - obj_Q)
 runtime.stop()
 print(' ')

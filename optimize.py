@@ -11,7 +11,7 @@ def f(X):
     beta = 5 / 4
     manning = 0.012
     # sim_len = (60 / dt) * 24
-    sim_days = 3
+    sim_days = 1
     sim_len = int(sim_days * 24 * 60 * 60 / dt)
     t = np.linspace(0, sim_len, num=sim_len + 1)
     t = t.astype(int)
@@ -19,13 +19,14 @@ def f(X):
     days = hours / 24
 
     tank_size = np.array([20, 20, 20])
-    tank_storage = bm.tank_init_storage
+    tank_storage = bm.tank_init_storage.copy()
     roof = np.array([1000, 1000, 1000])
     dwellers = np.array([150, 150, 150])
 
-    release_hrs = math.ceil(bm.zero_Q * (dt / 60) / 60)
+    release_hrs = math.ceil(bm.last_overflow * (dt / 60) / 60)
     #release = np.ones((len(bm.tank_storage), release_hrs))
-    release = X.reshape((len(bm.tank_storage), release_hrs), order='F')
+    release = X.copy()
+    release = np.reshape(release, (len(tank_storage), release_hrs), order='F')
     tank_orifice = np.array([0.05, 0.05, 0.05])
     tank_orifice_A = ((tank_orifice / 2) ** 2) * np.pi
     Cd = 0.6
@@ -40,22 +41,22 @@ def f(X):
     for demand in demands_3h:
         demands = np.append(demands, np.ones(int(demand_dt / dt)) * (demand * (dt / demand_dt)))
     '''
-    demands = bm.demands
-    demand_volume = bm.demand_volume
+    demands = bm.demands.copy()
+    demand_volume = bm.demand_volume.copy()
 
-    tank_outlets = bm.tank_outlets
-    tank_Ds = bm.tank_Ds
-    tank_slopes = bm.tank_slopes
-    tank_alphas = bm.tank_alphas
-    c_tanks = bm.c_tanks
-    outlet_max_A = bm.outlet_max_A
-    outlet_max_Q = bm.outlet_max_Q
+    tank_outlets = bm.tank_outlets.copy()
+    tank_Ds = bm.tank_Ds.copy()
+    tank_slopes = bm.tank_slopes.copy()
+    tank_alphas = bm.tank_alphas.copy()
+    c_tanks = bm.c_tanks.copy()
+    outlet_max_A = bm.outlet_max_A.copy()
+    outlet_max_Q = bm.outlet_max_Q.copy()
 
-    pipes_L = bm.pipes_L
-    pipe_Ds = bm.pipe_Ds
-    pipe_slopes = bm.pipe_slopes
-    pipe_alphas = bm.pipe_alphas
-    c_pipes = bm.c_pipes
+    pipes_L = bm.pipes_L.copy()
+    pipe_Ds = bm.pipe_Ds.copy()
+    pipe_slopes = bm.pipe_slopes.copy()
+    pipe_alphas = bm.pipe_alphas.copy()
+    c_pipes = bm.c_pipes.copy()
     '''
     rain_10min = np.linspace(0, 0.3, 4)
     rain_10min = np.append(rain_10min, np.flip(rain_10min))
@@ -65,8 +66,8 @@ def f(X):
         rain = np.append(rain, np.ones(int(rain_size)) * rain_I)
     rain = np.append(np.zeros(int((sim_len - len(rain)) / 5)), rain)
     '''
-    rain = bm.rain
-    rain_volume = bm.rain_volume
+    rain = bm.rain.copy()
+    rain_volume = bm.rain_volume.copy()
     # rain_volume = np.matmul(np.reshape(roof, (len(roof), 1)), np.reshape(rain, (1, len(rain)))) / 1000
     overflows = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
 
@@ -88,11 +89,11 @@ def f(X):
             fill_result = bm.tank_fill(tank_storage, rain_volume[:, i], tank_size)
             tank_storage = fill_result.tank_storage
             overflows[:, i] = fill_result.overflows
-        if i < bm.zero_Q:
-            release_Q = tank_orifice_A * Cd * np.sqrt(2 * 9.81 * (tank_storage / tank_A)) *0.1* release[:,
-                                                                                            i // int(60 * 60 / dt)]
+        if i <= bm.last_overflow:
+            release_deg = release[:, i // int(60 * 60 / dt)]
         else:
-            release_Q = 0
+            release_deg = 0.0
+        release_Q = tank_orifice_A * Cd * np.sqrt(2 * 9.81 * (tank_storage / tank_A)) * 0.1 * release_deg
         releases_volume[:, i] = release_Q * dt
         tank_storage -= release_Q * dt
         if len(tank_storage[tank_storage < 0]) > 0:
@@ -128,8 +129,8 @@ def f(X):
             pipe_Q[j, i, 1] = pipe_alphas[j] * (pipe_A[j, i, 1] ** beta)
         if pipe_Q[2, i, 1] > bm.pipe_Q[2, bm.max_Q, 1]:
             penalty += 10
-        if i < bm.zero_Q:
-            to_min += abs(pipe_Q[2, i, 1] - bm.obj_Q)
+        if i < bm.last_overflow:
+            to_min += np.abs(pipe_Q[2, i, 1] - bm.obj_Q)
 
     mass_balance_err = 100 * (abs(integrate.simps(pipe_Q[2, :, 1] * dt, t[0:-1])-(np.sum(overflows)+np.sum(releases_volume)))/
                               (np.sum(overflows) + np.sum(releases_volume)))
@@ -139,18 +140,18 @@ def f(X):
     return to_min
 
 
-varbound = np.array([[0, 10]] * (3*math.ceil(bm.zero_Q * (bm.dt / 60) / 60)))
-algorithm_param = {'max_num_iteration': 1,\
-                   'population_size': 50,\
-                   'mutation_probability':0.1,\
+varbound = np.array([[0, 10]] * (3*math.ceil(bm.last_overflow * (bm.dt / 60) / 60)))
+algorithm_param = {'max_num_iteration': 100,\
+                   'population_size': 25,\
+                   'mutation_probability':0.05,\
                    'elit_ratio': 0.02,\
-                   'crossover_probability': 0.5,\
+                   'crossover_probability': 0.8,\
                    'parents_portion': 0.3,\
                    'crossover_type':'uniform',\
                    'max_iteration_without_improv':100}
-model = ga(function=f, dimension=3*math.ceil(bm.zero_Q * (bm.dt / 60) / 60), variable_type='int', variable_boundaries=varbound,algorithm_parameters=algorithm_param, function_timeout=40)
+model = ga(function=f, dimension=3*math.ceil(bm.last_overflow * (bm.dt / 60) / 60), variable_type='int', variable_boundaries=varbound,algorithm_parameters=algorithm_param, function_timeout=40)
 model.run()
-solution=model.ouput_dict
+solution=model.output_dict
 print('_')
 
 
