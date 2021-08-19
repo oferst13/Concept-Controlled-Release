@@ -141,8 +141,8 @@ def f(X):
 
 
 varbound = np.array([[0, 10]] * (3*math.ceil(bm.last_overflow * (bm.dt / 60) / 60)))
-algorithm_param = {'max_num_iteration': 100,\
-                   'population_size': 25,\
+algorithm_param = {'max_num_iteration': 200,\
+                   'population_size': 40,\
                    'mutation_probability':0.05,\
                    'elit_ratio': 0.02,\
                    'crossover_probability': 0.8,\

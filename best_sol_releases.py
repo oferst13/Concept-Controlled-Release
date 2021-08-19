@@ -6,8 +6,10 @@ import math
 from linetimer import CodeTimer
 
 with CodeTimer():
-    X = [1.,  3.,  2.,  2.,  3.,  1.,  2.,  7.,  1.,  5., 10.,  5.,  1.,  4.,  2.]
+    X = [1.,  1.,  4.,  0.,  5.,  1.,  2.,  4.,  4.,  9.,  8., 10.,  0.,  3.,  3.]
     release = np.array(X).copy()
+    # xx = np.random.randint(11, size=len(X))
+    # release = np.array(xx).copy()
     dt = 30
     rain_dt = 600
     beta = 5 / 4
@@ -80,7 +82,7 @@ with CodeTimer():
     penalty = 0
     runs = 0
 
-    for i in range(sim_len):
+    for i in range(zero_Q):
         if sum(tank_storage) == 0 and sum(rain[i:-1]) == 0:
             break
         runs += 1
@@ -136,6 +138,7 @@ with CodeTimer():
 
     plt.plot(hours[0:zero_Q + 100], pipe_Q[2, :zero_Q + 100, 1], label="optimized outlet flow")
     plt.plot(hours[0:zero_Q + 100], benchmark_Q[2, :zero_Q + 100, 1], label="benchmark outlet flow")
+    plt.plot(hours[0:zero_Q + 100], np.ones_like(hours[0:zero_Q + 100])*obj_Q, '--', label="objective Q")
     plt.ylabel('Q (' + r'$m^3$' + '/s)')
     plt.xlabel('t (hours)')
     plt.legend()
