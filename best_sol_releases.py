@@ -6,7 +6,8 @@ import math
 from linetimer import CodeTimer
 
 with CodeTimer():
-    X = [1.,  1.,  4.,  0.,  5.,  1.,  2.,  4.,  4.,  9.,  8., 10.,  0.,  3.,  3.]
+    X = [0., 0., 7., 0., 5., 2., 4., 2., 8., 8., 2., 5., 1., 3., 2., 3., 0., 1., 0., 3., 1., 3., 0., 3.,
+         1., 2., 1.]
     release = np.array(X).copy()
     # xx = np.random.randint(11, size=len(X))
     # release = np.array(xx).copy()
@@ -65,8 +66,9 @@ with CodeTimer():
     rain = np.array([])
     for rain_I in rain_10min:
         rain = np.append(rain, np.ones(int(rain_size)) * rain_I)
-    rain = np.append(np.zeros(int((sim_len - len(rain)) / 5)), rain)
+    rain = np.append(np.zeros(int((sim_len - len(rain)) / 6)), rain)
     rain = np.append(rain, np.zeros(sim_len - len(rain)))
+    rain[900:900 + max(np.shape(np.nonzero(rain)))] = rain[np.nonzero(rain)] * 0.5
     rain_volume = np.matmul(np.reshape(roof, (len(roof), 1)), np.reshape(rain, (1, len(rain)))) / 1000
     overflows = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
 
@@ -82,7 +84,7 @@ with CodeTimer():
     penalty = 0
     runs = 0
 
-    for i in range(zero_Q):
+    for i in range(sim_len):
         if sum(tank_storage) == 0 and sum(rain[i:-1]) == 0:
             break
         runs += 1
@@ -132,13 +134,9 @@ with CodeTimer():
         if i < last_overflow:
             to_min += np.abs(pipe_Q[2, i, 1] - obj_Q)
 
-    # line_objects = plt.plot(hours[0:zero_Q+1], np.transpose(pipe_Q[2, 0:zero_Q+1, 1], np.transpose(benchmark_Q[2, 0:zero_Q+1, 1])))
-    # plt.gca().set_prop_cycle(None)
-    # line_objects.extend(plt.plot(hours[0:-1], np.transpose(pipe_Q[:, :, 0]), '-.', linewidth=1))
-
     plt.plot(hours[0:zero_Q + 100], pipe_Q[2, :zero_Q + 100, 1], label="optimized outlet flow")
     plt.plot(hours[0:zero_Q + 100], benchmark_Q[2, :zero_Q + 100, 1], label="benchmark outlet flow")
-    plt.plot(hours[0:zero_Q + 100], np.ones_like(hours[0:zero_Q + 100])*obj_Q, '--', label="objective Q")
+    plt.plot(hours[0:zero_Q + 100], np.ones_like(hours[0:zero_Q + 100]) * obj_Q, '--', label="objective Q")
     plt.ylabel('Q (' + r'$m^3$' + '/s)')
     plt.xlabel('t (hours)')
     plt.legend()
@@ -151,17 +149,3 @@ with CodeTimer():
     print(f"Mass Balance Error: {mass_balance_err:0.2f}%")
     to_min += penalty
     print('_')
-
-'''
-varbound = np.array([[0, obj_Q*2]] * 6)
-algorithm_param = {'max_num_iteration': 100,\
-                   'population_size':50,\
-                   'mutation_probability':0.1,\
-                   'elit_ratio': 0.01,\
-                   'crossover_probability': 0.5,\
-                   'parents_portion': 0.3,\
-                   'crossover_type':'uniform',\
-                   'max_iteration_without_improv':100}
-model = ga(function=f, dimension=6, variable_type='real', variable_boundaries=varbound,algorithm_parameters=algorithm_param, function_timeout=15)
-model.run()
-'''
