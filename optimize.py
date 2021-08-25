@@ -141,7 +141,7 @@ def f(X):
 
 
 varbound = np.array([[0, 10]] * (3*math.ceil(bm.last_overflow * (bm.dt / 60) / 60)))
-algorithm_param = {'max_num_iteration': 200,\
+algorithm_param = {'max_num_iteration': 250,\
                    'population_size': 40,\
                    'mutation_probability':0.05,\
                    'elit_ratio': 0.02,\
@@ -151,7 +151,8 @@ algorithm_param = {'max_num_iteration': 200,\
                    'max_iteration_without_improv':100}
 model = ga(function=f, dimension=3*math.ceil(bm.last_overflow * (bm.dt / 60) / 60), variable_type='int', variable_boundaries=varbound,algorithm_parameters=algorithm_param, function_timeout=40)
 model.run()
-solution=model.output_dict
+solution = model.output_dict
+opt_release = solution['variable']
 print('_')
 
 

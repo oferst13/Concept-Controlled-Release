@@ -1,13 +1,13 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy import integrate
-from benchmark import obj_Q, zero_Q, last_overflow, outlet_max_Q, tank_fill, rw_use, pipe_Q as benchmark_Q
+from benchmark import obj_Q, zero_Q, last_overflow, outlet_max_Q, tank_fill, rw_use, pipe_Q as benchmark_Q, \
+    rain as bm_rain
 import math
 from linetimer import CodeTimer
 
 with CodeTimer():
-    X = [0., 0., 7., 0., 5., 2., 4., 2., 8., 8., 2., 5., 1., 3., 2., 3., 0., 1., 0., 3., 1., 3., 0., 3.,
-         1., 2., 1.]
+    X = np.array([3.,  7.,  3.,  8.,  5.,  6., 10., 10., 10.,  5.,  1.,  6.,  0., 7.,  3.])
     release = np.array(X).copy()
     # xx = np.random.randint(11, size=len(X))
     # release = np.array(xx).copy()
@@ -59,7 +59,7 @@ with CodeTimer():
     pipe_slopes = np.array([0.02, 0.02, 0.02])
     pipe_alphas = (0.501 / manning) * (pipe_Ds ** (1 / 6)) * (pipe_slopes ** 0.5)
     c_pipes = pipes_L / dt
-
+    '''
     rain_10min = np.linspace(0, 0.3, 4)
     rain_10min = np.append(rain_10min, np.flip(rain_10min))
     rain_size = rain_dt / dt
@@ -69,6 +69,8 @@ with CodeTimer():
     rain = np.append(np.zeros(int((sim_len - len(rain)) / 6)), rain)
     rain = np.append(rain, np.zeros(sim_len - len(rain)))
     rain[900:900 + max(np.shape(np.nonzero(rain)))] = rain[np.nonzero(rain)] * 0.5
+    '''
+    rain = bm_rain.copy()
     rain_volume = np.matmul(np.reshape(roof, (len(roof), 1)), np.reshape(rain, (1, len(rain)))) / 1000
     overflows = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
 
@@ -148,4 +150,7 @@ with CodeTimer():
             (np.sum(overflows) + np.sum(releases_volume)))
     print(f"Mass Balance Error: {mass_balance_err:0.2f}%")
     to_min += penalty
+    print(np.sum(rainW_use))
+    print(np.sum(tank_storage))
+    print(np.max(pipe_Q[2, :, 1]))
     print('_')

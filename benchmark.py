@@ -79,7 +79,7 @@ for rain_I in rain_10min:
     rain = np.append(rain, np.ones(int(rain_size)) * rain_I)
 rain = np.append(np.zeros(int((sim_len - len(rain)) / 6)), rain)
 rain = np.append(rain, np.zeros(sim_len - len(rain)))
-rain[900:900+max(np.shape(np.nonzero(rain)))]=rain[np.nonzero(rain)]*0.5
+rain[300:300+max(np.shape(np.nonzero(rain)))]=rain[np.nonzero(rain)]*1.2
 rain_volume = np.matmul(np.reshape(roof, (len(roof), 1)), np.reshape(rain, (1, len(rain)))) / 1000
 overflows = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
 rainW_use = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
@@ -128,12 +128,12 @@ print(f"Mass Balance Error: {mass_balance_err:0.2f}%")
 
 max_Q = np.argmax(pipe_Q[2, :, 1])
 zero_Q = (np.asarray(np.nonzero(pipe_Q[2, max_Q:-1, 1] < 1e-5))[0])[0] + max_Q
-
+'''
 plt.plot(hours[0:zero_Q+1], pipe_Q[2, :zero_Q+1, 1], label="optimized outlet flow")
 plt.ylabel('Q (' + r'$m^3$' + '/s)')
 plt.xlabel('t (hours)')
 plt.legend()
-
+'''
 
 last_overflow = np.max(np.nonzero(np.sum(overflows, axis=0)))
 obj_Q = integrate.simps(pipe_Q[2, :zero_Q, 1] * dt, t[:zero_Q]) / (last_overflow * dt)
@@ -141,5 +141,7 @@ to_min = float(0)
 for i in range(last_overflow):
     to_min += abs(pipe_Q[2, i, 1] - obj_Q)
 runtime.stop()
-print(' ')
+print(np.sum(rainW_use))
+print(np.sum(tank_storage))
+print(np.max(pipe_Q[2, :, 1]))
 
