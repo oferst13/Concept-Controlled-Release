@@ -32,7 +32,7 @@ def rw_use(tank_storage, demand):
 runtime = Timer()
 runtime.start()
 dt = 30
-rain_dt = 600
+rain_dt = 60*10
 beta = 5 / 4
 manning = 0.012
 sim_days = 1
@@ -71,6 +71,11 @@ pipe_slopes = np.array([0.02, 0.02, 0.02])
 pipe_alphas = (0.501 / manning) * (pipe_Ds ** (1 / 6)) * (pipe_slopes ** 0.5)
 c_pipes = pipes_L / dt
 
+rain = np.zeros(int(sim_days * 24 * 3600 / rain_dt))
+rain[18:24] = 33.8 / 6
+
+
+'''
 rain_10min = np.linspace(0, 0.3, 4)
 rain_10min = np.append(rain_10min, np.flip(rain_10min))
 rain_size = rain_dt / dt
@@ -81,6 +86,7 @@ rain = np.append(np.zeros(int((sim_len - len(rain)) / 6)), rain)
 rain = np.append(rain, np.zeros(sim_len - len(rain)))
 rain[300:300+max(np.shape(np.nonzero(rain)))]=rain[np.nonzero(rain)]*1.2
 rain_volume = np.matmul(np.reshape(roof, (len(roof), 1)), np.reshape(rain, (1, len(rain)))) / 1000
+'''
 overflows = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
 rainW_use = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
 tank_storage_all = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
