@@ -1,17 +1,17 @@
 import numpy as np
+from matplotlib import pyplot as plt
 from scipy import integrate
 import benchmark as bm
 import math
-from geneticalgorithm import geneticalgorithm as ga
+from linetimer import CodeTimer
 
-
-def f(X):
+with CodeTimer():
     dt = bm.dt
     rain_dt = 600
     beta = 5 / 4
     manning = 0.012
     # sim_len = (60 / dt) * 24
-    sim_days = 1
+    sim_days = 3
     sim_len = int(sim_days * 24 * 60 * 60 / dt)
     t = np.linspace(0, sim_len, num=sim_len + 1)
     t = t.astype(int)
@@ -19,14 +19,13 @@ def f(X):
     days = hours / 24
 
     tank_size = np.array([20, 20, 20])
-    tank_storage = bm.tank_init_storage.copy()
+    tank_storage = bm.tank_init_storage
     roof = np.array([1000, 1000, 1000])
     dwellers = np.array([150, 150, 150])
 
-    release_hrs = math.ceil(bm.last_overflow * (dt / 60) / 60)
-    #release = np.ones((len(bm.tank_storage), release_hrs))
-    release = X.copy()
-    release = np.reshape(release, (len(tank_storage), release_hrs), order='F')
+    release_hrs = math.ceil(bm.zero_Q * (dt / 60) / 60)
+    release = np.ones((len(bm.tank_storage), release_hrs))
+    release = release.reshape((len(bm.tank_storage), release_hrs), order='F')
     tank_orifice = np.array([0.05, 0.05, 0.05])
     tank_orifice_A = ((tank_orifice / 2) ** 2) * np.pi
     Cd = 0.6
@@ -41,22 +40,22 @@ def f(X):
     for demand in demands_3h:
         demands = np.append(demands, np.ones(int(demand_dt / dt)) * (demand * (dt / demand_dt)))
     '''
-    demands = bm.demands.copy()
-    demand_volume = bm.demand_volume.copy()
+    demands = bm.demands
+    demand_volume = bm.demand_volume
 
-    tank_outlets = bm.tank_outlets.copy()
-    tank_Ds = bm.tank_Ds.copy()
-    tank_slopes = bm.tank_slopes.copy()
-    tank_alphas = bm.tank_alphas.copy()
-    c_tanks = bm.c_tanks.copy()
-    outlet_max_A = bm.outlet_max_A.copy()
-    outlet_max_Q = bm.outlet_max_Q.copy()
+    tank_outlets = bm.tank_outlets
+    tank_Ds = bm.tank_Ds
+    tank_slopes = bm.tank_slopes
+    tank_alphas = bm.tank_alphas
+    c_tanks = bm.c_tanks
+    outlet_max_A = bm.outlet_max_A
+    outlet_max_Q = bm.outlet_max_Q
 
-    pipes_L = bm.pipes_L.copy()
-    pipe_Ds = bm.pipe_Ds.copy()
-    pipe_slopes = bm.pipe_slopes.copy()
-    pipe_alphas = bm.pipe_alphas.copy()
-    c_pipes = bm.c_pipes.copy()
+    pipes_L = bm.pipes_L
+    pipe_Ds = bm.pipe_Ds
+    pipe_slopes = bm.pipe_slopes
+    pipe_alphas = bm.pipe_alphas
+    c_pipes = bm.c_pipes
     '''
     rain_10min = np.linspace(0, 0.3, 4)
     rain_10min = np.append(rain_10min, np.flip(rain_10min))
@@ -66,8 +65,8 @@ def f(X):
         rain = np.append(rain, np.ones(int(rain_size)) * rain_I)
     rain = np.append(np.zeros(int((sim_len - len(rain)) / 5)), rain)
     '''
-    rain = bm.rain.copy()
-    rain_volume = bm.rain_volume.copy()
+    rain = bm.rain
+    rain_volume = bm.rain_volume
     # rain_volume = np.matmul(np.reshape(roof, (len(roof), 1)), np.reshape(rain, (1, len(rain)))) / 1000
     overflows = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
 
@@ -81,19 +80,21 @@ def f(X):
 
     to_min = 0
     penalty = 0
+    runs = 0
 
     for i in range(bm.zero_Q):
         if sum(tank_storage) == 0 and sum(rain[i:-1]) == 0:
             break
+        runs += 1
         if np.sum(rain_volume[:, i]) > 0:
             fill_result = bm.tank_fill(tank_storage, rain_volume[:, i], tank_size)
             tank_storage = fill_result.tank_storage
             overflows[:, i] = fill_result.overflows
-        if i <= bm.last_overflow:
-            release_deg = release[:, i // int(60 * 60 / dt)]
+        if i < bm.zero_Q:
+            release_Q = tank_orifice_A * Cd * np.sqrt(2 * 9.81 * (tank_storage / tank_A)) * 0.1*release[:,
+                                                                                            i // int(60 * 60 / dt)]
         else:
-            release_deg = 0.0
-        release_Q = tank_orifice_A * Cd * np.sqrt(2 * 9.81 * (tank_storage / tank_A)) * 0.1 * release_deg
+            release_Q = 0
         releases_volume[:, i] = release_Q * dt
         tank_storage -= release_Q * dt
         if len(tank_storage[tank_storage < 0]) > 0:
@@ -127,38 +128,39 @@ def f(X):
                     ((pipe_A[j, i, 0] + pipe_A[j, i - 1, 1]) / 2) ** (beta - 1)) * \
                               (pipe_A[j, i - 1, 1] - pipe_A[j, i, 0])
             pipe_Q[j, i, 1] = pipe_alphas[j] * (pipe_A[j, i, 1] ** beta)
-        if pipe_Q[2, i, 1] > bm.pipe_Q[2, bm.max_Q, 1]:
-            penalty += 10
-        if i < bm.last_overflow:
-            to_min += np.abs(pipe_Q[2, i, 1] - bm.obj_Q)
 
-    mass_balance_err = 100 * (abs(integrate.simps(pipe_Q[2, :, 1] * dt, t[0:-1])-(np.sum(overflows)+np.sum(releases_volume)))/
-                              (np.sum(overflows) + np.sum(releases_volume)))
+        if i < bm.zero_Q:
+            to_min += abs(pipe_Q[2, i, 1] - bm.obj_Q)
+
+    # line_objects = plt.plot(hours[0:zero_Q+1], np.transpose(pipe_Q[2, 0:zero_Q+1, 1], np.transpose(benchmark_Q[2, 0:zero_Q+1, 1])))
+    # plt.gca().set_prop_cycle(None)
+    # line_objects.extend(plt.plot(hours[0:-1], np.transpose(pipe_Q[:, :, 0]), '-.', linewidth=1))
+
+    plt.plot(hours[0:bm.zero_Q + 1], pipe_Q[2, :bm.zero_Q + 1, 1], label="optimized outlet flow")
+    plt.plot(hours[0:bm.zero_Q + 1], bm.pipe_Q[2, :bm.zero_Q + 1, 1], label="benchmark outlet flow")
+    plt.ylabel('Q (' + r'$m^3$' + '/s)')
+    plt.xlabel('t (hours)')
+    plt.legend()
+    # plt.legend(line_objects, ('Pipe 1 - outflow', 'Pipe 2 - outflow', 'Pipe 3 - outflow', 'Pipe 1 - inflow', \
+    # 'Pipe 2 - inflow', 'Pipe 3 - inflow'))
+
+    mass_balance_err = 100 * (
+                abs(integrate.simps(pipe_Q[2, :, 1] * dt, t[0:-1]) - (np.sum(overflows) + np.sum(releases_volume))) /
+                (np.sum(overflows) + np.sum(releases_volume)))
     print(f"Mass Balance Error: {mass_balance_err:0.2f}%")
-
     to_min += penalty
-    return to_min
 
-
-varbound = np.array([[0, 10]] * (3*math.ceil(bm.last_overflow * (bm.dt / 60) / 60)))
-algorithm_param = {'max_num_iteration': 250,\
-                   'population_size': 40,\
-                   'mutation_probability':0.05,\
-                   'elit_ratio': 0.02,\
-                   'crossover_probability': 0.8,\
+'''
+varbound = np.array([[0, obj_Q*2]] * 6)
+algorithm_param = {'max_num_iteration': 100,\
+                   'population_size':50,\
+                   'mutation_probability':0.1,\
+                   'elit_ratio': 0.01,\
+                   'crossover_probability': 0.5,\
                    'parents_portion': 0.3,\
                    'crossover_type':'uniform',\
                    'max_iteration_without_improv':100}
-model = ga(function=f, dimension=3*math.ceil(bm.last_overflow * (bm.dt / 60) / 60), variable_type='int', variable_boundaries=varbound,algorithm_parameters=algorithm_param, function_timeout=40)
+model = ga(function=f, dimension=6, variable_type='real', variable_boundaries=varbound,algorithm_parameters=algorithm_param, function_timeout=15)
 model.run()
-solution = model.output_dict
-opt_release = solution['variable']
+'''
 print('_')
-
-
-
-
-
-
-
-
