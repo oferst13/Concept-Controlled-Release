@@ -32,7 +32,7 @@ def rw_use(tank_storage, demand):
 runtime = Timer()
 runtime.start()
 dt = 30
-rain_dt = 60*10
+rain_dt = 60 * 10
 beta = 5 / 4
 manning = 0.012
 sim_days = 1
@@ -72,8 +72,7 @@ pipe_alphas = (0.501 / manning) * (pipe_Ds ** (1 / 6)) * (pipe_slopes ** 0.5)
 c_pipes = pipes_L / dt
 
 rain = np.zeros(int(sim_days * 24 * 3600 / rain_dt))
-rain[18:24] = 33.8 / 6
-
+rain[18:30] = 25.1 / (3600 / rain_dt)
 
 '''
 rain_10min = np.linspace(0, 0.3, 4)
@@ -85,20 +84,22 @@ for rain_I in rain_10min:
 rain = np.append(np.zeros(int((sim_len - len(rain)) / 6)), rain)
 rain = np.append(rain, np.zeros(sim_len - len(rain)))
 rain[300:300+max(np.shape(np.nonzero(rain)))]=rain[np.nonzero(rain)]*1.2
-rain_volume = np.matmul(np.reshape(roof, (len(roof), 1)), np.reshape(rain, (1, len(rain)))) / 1000
 '''
+# rain_volume = np.matmul(np.reshape(roof, (len(roof), 1)), np.reshape(rain, (1, len(rain)))) / 1000
 overflows = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
 rainW_use = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
 tank_storage_all = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
-
+rain_volume = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
 outlet_A = np.zeros((len(tank_outlets), sim_len, 2), dtype=np.longfloat)
 outlet_Q = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
 pipe_A = np.zeros((len(pipes_L), sim_len, 2), dtype=np.longfloat)
 pipe_Q = np.zeros((len(pipes_L), sim_len, 2), dtype=np.longfloat)
 
 for i in range(sim_len):
-    if sum(tank_storage) == 0 and sum(rain[i:-1]) == 0:
+    current_rain = rain[int(i // (rain_dt / dt))]
+    if sum(tank_storage) == 0 and sum(rain[int(i // (rain_dt / dt)):-1]) == 0:
         break
+    rain_volume[:, i] = current_rain * (dt/rain_dt) * roof / 1000
     if np.sum(rain_volume[:, i]) > 0:
         fill_result = tank_fill(tank_storage, rain_volume[:, i], tank_size)
         tank_storage = fill_result.tank_storage
@@ -108,7 +109,7 @@ for i in range(sim_len):
     rainW_use[:, i] = use_result.rainW_use
     tank_storage_all[:, i] = tank_storage
     outlet_A[:, i, 0] = ((overflows[:, i] / dt) / tank_alphas) ** (1 / beta)
-    if i < 1 or (np.sum(pipe_A[:, i-1, :]) + np.sum(outlet_A[:, i-1])) < 1e-5:
+    if i < 1 or (np.sum(pipe_A[:, i - 1, :]) + np.sum(outlet_A[:, i - 1])) < 1e-5:
         continue
     for j in range(len(tank_outlets)):
         constants = tank_alphas[j] * beta * (dt / tank_outlets[j])
@@ -129,7 +130,7 @@ for i in range(sim_len):
         pipe_Q[j, i, 1] = pipe_alphas[j] * (pipe_A[j, i, 1] ** beta)
 
 T = i
-mass_balance_err = 100 * (abs(integrate.simps(pipe_Q[2, :, 1] * dt, t[0:-1])-np.sum(overflows)))/np.sum(overflows)
+mass_balance_err = 100 * (abs(integrate.simps(pipe_Q[2, :, 1] * dt, t[0:-1]) - np.sum(overflows))) / np.sum(overflows)
 print(f"Mass Balance Error: {mass_balance_err:0.2f}%")
 
 max_Q = np.argmax(pipe_Q[2, :, 1])
@@ -150,4 +151,4 @@ runtime.stop()
 print(np.sum(rainW_use))
 print(np.sum(tank_storage))
 print(np.max(pipe_Q[2, :, 1]))
-
+# print('_')

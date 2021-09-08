@@ -83,8 +83,8 @@ def f(X):
     penalty = 0
 
     for i in range(bm.zero_Q):
-        if sum(tank_storage) == 0 and sum(rain[i:-1]) == 0:
-            break
+        # if sum(tank_storage) == 0 and sum(rain_volume[i:-1]) == 0:
+            # break
         if np.sum(rain_volume[:, i]) > 0:
             fill_result = bm.tank_fill(tank_storage, rain_volume[:, i], tank_size)
             tank_storage = fill_result.tank_storage

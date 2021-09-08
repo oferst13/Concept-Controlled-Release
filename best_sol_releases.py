@@ -1,13 +1,12 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy import integrate
-from benchmark import obj_Q, zero_Q, last_overflow, outlet_max_Q, tank_fill, rw_use, pipe_Q as benchmark_Q, \
-    rain as bm_rain
+import benchmark as bm
 import math
 from linetimer import CodeTimer
 
 with CodeTimer():
-    X = np.array([3.,  7.,  3.,  8.,  5.,  6., 10., 10., 10.,  5.,  1.,  6.,  0., 7.,  3.])
+    X = np.array([3.,  2.,  9.,  9.,  7.,  8.,  8., 10.,  8.,  3., 10., 10.,  0., 1.,  3.])
     release = np.array(X).copy()
     # xx = np.random.randint(11, size=len(X))
     # release = np.array(xx).copy()
@@ -28,7 +27,7 @@ with CodeTimer():
     roof = np.array([1000, 1000, 1000])
     dwellers = np.array([150, 150, 150])
 
-    release_hrs = math.ceil(last_overflow * (dt / 60) / 60)
+    release_hrs = math.ceil(bm.last_overflow * (dt / 60) / 60)
     release = release.reshape((len(tank_storage), release_hrs), order='F')
     tank_orifice = np.array([0.05, 0.05, 0.05])
     tank_orifice_A = ((tank_orifice / 2) ** 2) * np.pi
@@ -36,7 +35,7 @@ with CodeTimer():
     tank_D = np.array([2.8, 2.8, 2.8])
     tank_A = ((tank_D / 2) ** 2) * np.pi
     releases_volume = np.zeros((len(tank_storage), sim_len), dtype=np.longfloat)
-
+    '''
     demand_dt = 3 * 60 * 60
     demands_3h = np.array([5, 3, 20, 15, 12, 15, 18, 12])
     demands_PD = 33
@@ -45,7 +44,8 @@ with CodeTimer():
         demands = np.append(demands, np.ones(int(demand_dt / dt)) * (demand * (dt / demand_dt)))
     demands = demands * demands_PD / 100
     demand_volume = np.matmul(np.reshape(dwellers, (len(dwellers), 1)), np.reshape(demands, (1, len(demands)))) / 1000
-
+    '''
+    demand_volume = bm.demand_volume.copy()
     tank_outlets = np.array([500, 500, 500])
     tank_Ds = np.array([0.2, 0.2, 0.2])
     tank_slopes = np.array([0.02, 0.02, 0.02])
@@ -70,8 +70,8 @@ with CodeTimer():
     rain = np.append(rain, np.zeros(sim_len - len(rain)))
     rain[900:900 + max(np.shape(np.nonzero(rain)))] = rain[np.nonzero(rain)] * 0.5
     '''
-    rain = bm_rain.copy()
-    rain_volume = np.matmul(np.reshape(roof, (len(roof), 1)), np.reshape(rain, (1, len(rain)))) / 1000
+    rain = bm.rain.copy()
+    rain_volume = bm.rain_volume.copy()
     overflows = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
 
     rainW_use = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
@@ -87,14 +87,14 @@ with CodeTimer():
     runs = 0
 
     for i in range(sim_len):
-        if sum(tank_storage) == 0 and sum(rain[i:-1]) == 0:
-            break
+        #if sum(tank_storage) == 0 and sum(rain_volume[i:-1]) == 0:
+            #break
         runs += 1
         if np.sum(rain_volume[:, i]) > 0:
-            fill_result = tank_fill(tank_storage, rain_volume[:, i], tank_size)
+            fill_result = bm.tank_fill(tank_storage, rain_volume[:, i], tank_size)
             tank_storage = fill_result.tank_storage
             overflows[:, i] = fill_result.overflows
-        if i <= last_overflow:
+        if i <= bm.last_overflow:
             release_deg = release[:, i // int(60 * 60 / dt)]
         else:
             release_deg = 0.0
@@ -107,7 +107,7 @@ with CodeTimer():
                 tank_storage[val] += releases_volume[val, i]
                 releases_volume[val, i] = tank_storage[val]
                 tank_storage[val] = 0.00
-        use_result = rw_use(tank_storage, demand_volume[:, i % demand_volume.shape[1]])
+        use_result = bm.rw_use(tank_storage, demand_volume[:, i % demand_volume.shape[1]])
         tank_storage = use_result.tank_storage
         rainW_use[:, i] = use_result.rainW_use
         tank_storage_all[:, i] = tank_storage
@@ -133,12 +133,12 @@ with CodeTimer():
                               (pipe_A[j, i - 1, 1] - pipe_A[j, i, 0])
             pipe_Q[j, i, 1] = pipe_alphas[j] * (pipe_A[j, i, 1] ** beta)
 
-        if i < last_overflow:
-            to_min += np.abs(pipe_Q[2, i, 1] - obj_Q)
+        if i < bm.last_overflow:
+            to_min += np.abs(pipe_Q[2, i, 1] - bm.obj_Q)
 
-    plt.plot(hours[0:zero_Q + 100], pipe_Q[2, :zero_Q + 100, 1], label="optimized outlet flow")
-    plt.plot(hours[0:zero_Q + 100], benchmark_Q[2, :zero_Q + 100, 1], label="benchmark outlet flow")
-    plt.plot(hours[0:zero_Q + 100], np.ones_like(hours[0:zero_Q + 100]) * obj_Q, '--', label="objective Q")
+    plt.plot(hours[0:bm.zero_Q + 100], pipe_Q[2, :bm.zero_Q + 100, 1], label="optimized outlet flow")
+    plt.plot(hours[0:bm.zero_Q + 100], bm.pipe_Q[2, :bm.zero_Q + 100, 1], label="benchmark outlet flow")
+    plt.plot(hours[0:bm.zero_Q + 100], np.ones_like(hours[0:bm.zero_Q + 100]) * bm.obj_Q, '--', label="objective Q")
     plt.ylabel('Q (' + r'$m^3$' + '/s)')
     plt.xlabel('t (hours)')
     plt.legend()
