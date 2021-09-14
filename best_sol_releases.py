@@ -5,10 +5,10 @@ import benchmark as bm
 import math
 from linetimer import CodeTimer
 
-X = np.array([8., 8., 8., 0., 6., 1., 7., 5., 1., 3., 0., 7., 6.,
-              2., 5., 5., 8., 0., 8., 8., 1., 10., 0., 8., 7., 9.,
-              4., 6., 8., 7., 7., 9., 10., 2., 5., 2., 1., 0., 0.,
-              0., 0., 0.])
+X = np.array([6., 10., 6., 1., 4., 1., 5., 4., 3., 2., 4., 7., 4.,
+              3., 6., 10., 8., 2., 9., 5., 2., 4., 9., 9., 7., 4.,
+              8., 10., 10., 8., 8., 8., 10., 0., 3., 0., 0., 0., 1.,
+              1., 1., 0.])
 release = np.array(X).copy()
 # xx = np.random.randint(11, size=len(X))
 # release = np.array(xx).copy()
