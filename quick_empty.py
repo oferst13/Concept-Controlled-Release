@@ -5,10 +5,10 @@ import benchmark as bm
 import math
 from linetimer import CodeTimer
 
-X = np.array([6., 10., 6., 1., 4., 1., 5., 4., 3., 2., 4., 7., 4.,
-              3., 6., 10., 8., 2., 9., 5., 2., 4., 9., 9., 7., 4.,
-              8., 10., 10., 8., 8., 8., 10., 0., 3., 0., 0., 0., 1.,
-              1., 1., 0.])
+X = np.array([10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.,
+              10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.,
+              10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.,
+              10., 10., 10.])
 release = np.array(X).copy()
 # xx = np.random.randint(11, size=len(X))
 # release = np.array(xx).copy()
@@ -26,7 +26,7 @@ rain_hours = np.linspace(0, int(sim_days * 24), int(sim_days * 24 * 3600 / rain_
 days = hours / 24
 
 tank_size = np.array([20, 20, 20])
-tank_storage = np.array([0, 0, 0], dtype=np.longfloat)
+tank_storage = np.array([20, 20, 20], dtype=np.longfloat)
 roof = np.array([1000, 1000, 1000])
 dwellers = np.array([150, 150, 150])
 
@@ -73,8 +73,8 @@ rain = np.append(np.zeros(int((sim_len - len(rain)) / 6)), rain)
 rain = np.append(rain, np.zeros(sim_len - len(rain)))
 rain[900:900 + max(np.shape(np.nonzero(rain)))] = rain[np.nonzero(rain)] * 0.5
 '''
-rain = bm.rain.copy()
-rain_volume = bm.rain_volume.copy()
+rain = np.zeros_like(bm.rain)
+rain_volume = np.zeros_like(bm.rain_volume)
 overflows = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
 
 rainW_use = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
@@ -145,7 +145,7 @@ plt.plot(hours[0:bm.zero_Q + 100], np.ones_like(hours[0:bm.zero_Q + 100]) * bm.o
 plt.ylabel('Q (' + r'$m^3$' + '/s)')
 plt.xlabel('t (hours)')
 plt.legend()
-
+'''
 plot_hours = np.ceil(bm.zero_Q * dt / 3600)
 fig, axs = plt.subplots(2, 1, gridspec_kw={'height_ratios': [1, 2]})
 axs[0].bar(rain_hours[np.nonzero(rain_hours <= plot_hours)],
@@ -174,7 +174,7 @@ axs[1].grid(True)
 fig.tight_layout(pad=0)
 plt.legend()
 plt.show()
-'''
+
 # plt.legend(line_objects, ('Pipe 1 - outflow', 'Pipe 2 - outflow', 'Pipe 3 - outflow', 'Pipe 1 - inflow', \
 # 'Pipe 2 - inflow', 'Pipe 3 - inflow'))
 

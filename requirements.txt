@@ -9,3 +9,4 @@ six==1.16.0
 scipy~=1.7.0
 geneticalgorithm~=1.0.2
 linetimer>=0.1.4
+pyswmm>=1.0.1
