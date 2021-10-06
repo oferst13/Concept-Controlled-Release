@@ -82,6 +82,7 @@ release_alphas = np.linspace(0, 0.8, 5)
 to_min = 0
 penalty = 0
 alpha_Q = np.zeros((len(release_alphas), sim_len), dtype=np.longfloat)
+alpha_res = np.zeros((len(release_alphas), 2), dtype=np.longfloat)
 
 for alpha_num, alpha in enumerate(release_alphas):
     overflows = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
@@ -143,6 +144,8 @@ for alpha_num, alpha in enumerate(release_alphas):
         if i < bm.last_overflow:
             to_min += np.abs(pipe_Q[2, i, 1] - bm.obj_Q)
         alpha_Q[alpha_num, :] = pipe_Q[-1, :, 1]
+        alpha_res[alpha_num, 0] = np.sum(rainW_use) + np.sum(tank_storage)
+        alpha_res[alpha_num, 1] = 1 - (np.max(pipe_Q[-1, :, 1])/np.max(bm.pipe_Q[-1, :, 1]))
 '''
 plt.plot(hours[0:bm.zero_Q + 100], pipe_Q[2, :bm.zero_Q + 100, 1], label="optimized outlet flow")
 plt.plot(hours[0:bm.zero_Q + 100], bm.pipe_Q[2, :bm.zero_Q + 100, 1], label="benchmark outlet flow")
