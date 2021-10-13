@@ -35,7 +35,6 @@ with pyswmm.Simulation('calib.inp') as sim:
         swmm_flow[2, i] = j3.total_inflow
         swmm_flow[3, i] = out.total_inflow
         i += 1
-    print(sim.flow_routing_error)
 
 plt.plot(source.hours[0:bm.zero_Q + 100], source.pipe_Q[2, :bm.zero_Q + 100, 1], label="kinemtic")
 plt.plot(source.hours[0:bm.zero_Q + 100], 0.001*swmm_flow[3, :bm.zero_Q + 100], label="dynamic")
