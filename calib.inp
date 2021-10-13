@@ -48,12 +48,12 @@ DRY_ONLY         NO
 [JUNCTIONS]
 ;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
 ;;-------------- ---------- ---------- ---------- ---------- ----------
-J1               60         0          0          0          0         
-J2               40         0          0          0          0         
-J3               20         0          0          0          0         
-Tank1            70         0          0          0          0         
-Tank2            50         0          0          0          0         
-Tank3            30         0          0          0          0         
+J1               30         0          0          0          0         
+J2               20         0          0          0          0         
+J3               10         0          0          0          0         
+Tank1            34         0          0          0          0         
+Tank2            24         0          0          0          0         
+Tank3            14         0          0          0          0         
 
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        
@@ -63,12 +63,12 @@ outlet           0          FREE                        NO
 [CONDUITS]
 ;;Name           From Node        To Node          Length     Roughness  InOffset   OutOffset  InitFlow   MaxFlow   
 ;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
-1                Tank1            J1               500        0.012      0          0          0          0         
-2                Tank2            J2               500        0.012      0          0          0          0         
-3                J1               J2               1000       0.012      0          0          0          0         
-4                Tank3            J3               500        0.012      0          0          0          0         
-5                J2               J3               1000       0.012      0          0          0          0         
-6                J3               outlet           1000       0.012      0          0          0          0         
+1                Tank1            J1               200        0.012      0          0          0          0         
+2                Tank2            J2               200        0.012      0          0          0          0         
+3                J1               J2               500        0.012      0          0          0          0         
+4                Tank3            J3               200        0.012      0          0          0          0         
+5                J2               J3               500        0.012      0          0          0          0         
+6                J3               outlet           500        0.012      0          0          0          0         
 
 [XSECTIONS]
 ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels    Culvert   

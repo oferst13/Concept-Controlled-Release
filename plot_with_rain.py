@@ -16,13 +16,15 @@ axs[0].set_xlim([0, plot_hours])
 axs[0].set_ylabel('Rain (mm/hr)')
 axs[0].invert_yaxis()
 axs[0].grid(True)
-axs[1].plot(source.hours[np.nonzero(source.hours <= plot_hours)], source.pipe_Q[2, 0:len(source.hours[np.nonzero(source.hours <= plot_hours)]), 1],
+axs[1].plot(source.hours[np.nonzero(source.hours <= plot_hours)],
+            1000*source.pipe_Q[2, 0:len(source.hours[np.nonzero(source.hours <= plot_hours)]), 1], 'b-',
             label="optimized outlet flow")
-axs[1].plot(source.hours[np.nonzero(source.hours <= plot_hours)], bm.pipe_Q[2, 0:len(source.hours[np.nonzero(source.hours <= plot_hours)]), 1],
+axs[1].plot(source.hours[np.nonzero(source.hours <= plot_hours)],
+            1000*bm.pipe_Q[2, 0:len(source.hours[np.nonzero(source.hours <= plot_hours)]), 1], 'r-',
             label="benchmark outlet flow")
-axs[1].plot(source.hours[np.nonzero(source.hours <= plot_hours)], np.ones(len(source.hours[np.nonzero(source.hours <= plot_hours)])) * bm.obj_Q,
-            '--', label="objective Q")
-axs[1].set_ylabel('Q (' + r'$m^3$' + '/s)')
+axs[1].plot(source.hours[np.nonzero(source.hours <= plot_hours)], 1000*np.ones(len(source.hours[np.nonzero(source.hours <= plot_hours)])) * bm.obj_Q,
+            'g--', label="objective Q")
+axs[1].set_ylabel('Outlet Flow Rate (LPS)')
 axs[1].set_xlabel('t (hours)')
 axs[1].set_xlim([0, plot_hours])
 axs[1].set_ylim(bottom=0)
