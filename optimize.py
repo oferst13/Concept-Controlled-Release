@@ -153,6 +153,8 @@ model = ga(function=f, dimension=3*math.ceil(bm.last_overflow * (bm.dt / 60) / 6
 model.run()
 solution = model.output_dict
 opt_release = solution['variable']
+splitted = bm.rainfile.split('.')
+np.savetxt(splitted[0]+'_releases.'+splitted[1], opt_release, fmt='%d', delimiter=',')
 print('_')
 
 

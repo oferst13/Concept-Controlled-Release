@@ -5,10 +5,8 @@ import benchmark as bm
 import math
 from linetimer import CodeTimer
 
-X = np.array([6., 10., 6., 1., 4., 1., 5., 4., 3., 2., 4., 7., 4.,
-              3., 6., 10., 8., 2., 9., 5., 2., 4., 9., 9., 7., 4.,
-              8., 10., 10., 8., 8., 8., 10., 0., 3., 0., 0., 0., 1.,
-              1., 1., 0.])
+splitted = bm.rainfile.split('.')
+X = np.genfromtxt(splitted[0]+'_releases.'+splitted[1], delimiter=',')
 release = np.array(X).copy()
 # xx = np.random.randint(11, size=len(X))
 # release = np.array(xx).copy()
