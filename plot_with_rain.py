@@ -3,17 +3,18 @@ import numpy as np
 from matplotlib import pyplot as plt
 import benchmark as bm
 
+plt.rc('font', size=14)
 plot_hours = np.ceil(bm.zero_Q * source.dt / 3600)
 fig, axs = plt.subplots(2, 1, gridspec_kw={'height_ratios': [1, 2]})
 axs[0].bar(source.rain_hours[np.nonzero(source.rain_hours <= plot_hours)],
-           source.rain[0:len(source.rain_hours[np.nonzero(source.rain_hours <= plot_hours)])] * (3600 / source.rain_dt), width=source.rain_dt / 3600,
+           source.rain[0:len(source.rain_hours[np.nonzero(source.rain_hours <= plot_hours)])], width=source.rain_dt / 3600,
            align='edge')
 axs[0].spines['bottom'].set_visible(False)
 # axs[0].axes.xaxis.set_visible(False)
 axs[0].tick_params(labelbottom=False)
 axs[0].set_xlim([0, plot_hours])
 # axs[0].set_ylim([0,5])
-axs[0].set_ylabel('Rain (mm/hr)')
+axs[0].set_ylabel('Rain (mm/10-minutes)')
 axs[0].invert_yaxis()
 axs[0].grid(True)
 axs[1].plot(source.hours[np.nonzero(source.hours <= plot_hours)],
