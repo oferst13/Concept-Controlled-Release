@@ -43,7 +43,7 @@ hours = t * (dt / 60) / 60
 days = hours / 24
 
 tank_size = np.array([20, 20, 20])
-tank_init_storage = np.array([20, 20, 20], dtype=np.longfloat)
+tank_init_storage = np.array([0, 0, 0], dtype=np.longfloat)
 tank_storage = tank_init_storage
 roof = np.array([1000, 1000, 1000])
 dwellers = np.array([150, 150, 150])
@@ -72,7 +72,7 @@ pipe_alphas = (0.501 / manning) * (pipe_Ds ** (1 / 6)) * (pipe_slopes ** 0.5)
 c_pipes = pipes_L / dt
 
 rain = np.zeros(int(sim_days * 24 * 3600 / rain_dt))
-rainfile = '1hour-10.csv'
+rainfile = '99-00.csv'
 rain_input = np.genfromtxt(rainfile, delimiter=',')
 rain[:len(rain_input)] = rain_input
 

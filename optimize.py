@@ -142,7 +142,7 @@ def f(X):
 
 varbound = np.array([[0, 10]] * (3*math.ceil(bm.last_overflow * (bm.dt / 60) / 60)))
 algorithm_param = {'max_num_iteration': 200,\
-                   'population_size': 80,\
+                   'population_size': 2*3*math.ceil(bm.last_overflow * (bm.dt / 60) / 60),\
                    'mutation_probability':0.05,\
                    'elit_ratio': 0.02,\
                    'crossover_probability': 0.8,\
@@ -154,7 +154,7 @@ model.run()
 solution = model.output_dict
 opt_release = solution['variable']
 splitted = bm.rainfile.split('.')
-np.savetxt(splitted[0]+'_releases.'+splitted[1], opt_release, fmt='%d', delimiter=',')
+np.savetxt(splitted[0]+'_releases2.'+splitted[1], opt_release, fmt='%d', delimiter=',')
 print('_')
 
 
