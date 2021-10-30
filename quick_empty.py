@@ -5,8 +5,10 @@ import benchmark as bm
 import math
 from linetimer import CodeTimer
 
-splitted = bm.rainfile.split('.')
-X = np.genfromtxt(splitted[0]+'_releases1.'+splitted[1], delimiter=',')
+X = np.array([10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.,
+              10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.,
+              10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.,
+              10., 10., 10.])
 release = np.array(X).copy()
 # xx = np.random.randint(11, size=len(X))
 # release = np.array(xx).copy()
@@ -24,7 +26,7 @@ rain_hours = np.linspace(0, int(sim_days * 24), int(sim_days * 24 * 3600 / rain_
 days = hours / 24
 
 tank_size = np.array([20, 20, 20])
-tank_storage = bm.tank_init_storage.copy()
+tank_storage = np.array([20, 20, 20], dtype=np.longfloat)
 roof = np.array([1000, 1000, 1000])
 dwellers = np.array([150, 150, 150])
 
@@ -47,17 +49,17 @@ demands = demands * demands_PD / 100
 demand_volume = np.matmul(np.reshape(dwellers, (len(dwellers), 1)), np.reshape(demands, (1, len(demands)))) / 1000
 '''
 demand_volume = bm.demand_volume.copy()
-tank_outlets = np.array([200, 200, 200])
+tank_outlets = np.array([500, 500, 500])
 tank_Ds = np.array([0.2, 0.2, 0.2])
-tank_slopes = np.array([0.01, 0.01, 0.01])
+tank_slopes = np.array([0.02, 0.02, 0.02])
 tank_alphas = (0.501 / manning) * (tank_Ds ** (1 / 6)) * (tank_slopes ** 0.5)
 c_tanks = tank_outlets / dt
 outlet_max_A = 0.9 * (np.pi * ((tank_Ds / 2) ** 2))
 outlet_max_Q = tank_alphas * (outlet_max_A ** beta)
 
-pipes_L = np.array([500, 500, 500])
+pipes_L = np.array([1000, 1000, 1000])
 pipe_Ds = np.array([0.5, 0.5, 0.5])
-pipe_slopes = np.array([0.01, 0.01, 0.01])
+pipe_slopes = np.array([0.02, 0.02, 0.02])
 pipe_alphas = (0.501 / manning) * (pipe_Ds ** (1 / 6)) * (pipe_slopes ** 0.5)
 c_pipes = pipes_L / dt
 '''
@@ -71,8 +73,8 @@ rain = np.append(np.zeros(int((sim_len - len(rain)) / 6)), rain)
 rain = np.append(rain, np.zeros(sim_len - len(rain)))
 rain[900:900 + max(np.shape(np.nonzero(rain)))] = rain[np.nonzero(rain)] * 0.5
 '''
-rain = bm.rain.copy()
-rain_volume = bm.rain_volume.copy()
+rain = np.zeros_like(bm.rain)
+rain_volume = np.zeros_like(bm.rain_volume)
 overflows = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
 
 rainW_use = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
@@ -88,8 +90,8 @@ penalty = 0
 runs = 0
 
 for i in range(sim_len):
-    #if sum(tank_storage) == 0 and sum(rain_volume[i:-1]) == 0:
-        #break
+    # if sum(tank_storage) == 0 and sum(rain_volume[i:-1]) == 0:
+    # break
     runs += 1
     if np.sum(rain_volume[:, i]) > 0:
         fill_result = bm.tank_fill(tank_storage, rain_volume[:, i], tank_size)
@@ -143,7 +145,7 @@ plt.plot(hours[0:bm.zero_Q + 100], np.ones_like(hours[0:bm.zero_Q + 100]) * bm.o
 plt.ylabel('Q (' + r'$m^3$' + '/s)')
 plt.xlabel('t (hours)')
 plt.legend()
-
+'''
 plot_hours = np.ceil(bm.zero_Q * dt / 3600)
 fig, axs = plt.subplots(2, 1, gridspec_kw={'height_ratios': [1, 2]})
 axs[0].bar(rain_hours[np.nonzero(rain_hours <= plot_hours)],
@@ -172,7 +174,7 @@ axs[1].grid(True)
 fig.tight_layout(pad=0)
 plt.legend()
 plt.show()
-'''
+
 # plt.legend(line_objects, ('Pipe 1 - outflow', 'Pipe 2 - outflow', 'Pipe 3 - outflow', 'Pipe 1 - inflow', \
 # 'Pipe 2 - inflow', 'Pipe 3 - inflow'))
 

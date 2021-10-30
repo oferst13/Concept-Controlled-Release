@@ -83,8 +83,8 @@ def f(X):
     penalty = 0
 
     for i in range(bm.zero_Q):
-        if sum(tank_storage) == 0 and sum(rain[i:-1]) == 0:
-            break
+        # if sum(tank_storage) == 0 and sum(rain_volume[i:-1]) == 0:
+            # break
         if np.sum(rain_volume[:, i]) > 0:
             fill_result = bm.tank_fill(tank_storage, rain_volume[:, i], tank_size)
             tank_storage = fill_result.tank_storage
@@ -141,10 +141,10 @@ def f(X):
 
 
 varbound = np.array([[0, 10]] * (3*math.ceil(bm.last_overflow * (bm.dt / 60) / 60)))
-algorithm_param = {'max_num_iteration': 250,\
-                   'population_size': 40,\
+algorithm_param = {'max_num_iteration': 300,\
+                   'population_size': 2*3*math.ceil(bm.last_overflow * (bm.dt / 60) / 60),\
                    'mutation_probability':0.05,\
-                   'elit_ratio': 0.02,\
+                   'elit_ratio': 0.04,\
                    'crossover_probability': 0.8,\
                    'parents_portion': 0.3,\
                    'crossover_type':'uniform',\
@@ -153,6 +153,8 @@ model = ga(function=f, dimension=3*math.ceil(bm.last_overflow * (bm.dt / 60) / 6
 model.run()
 solution = model.output_dict
 opt_release = solution['variable']
+splitted = bm.rainfile.split('.')
+np.savetxt(splitted[0]+'_releases1.'+splitted[1], opt_release, fmt='%d', delimiter=',')
 print('_')
 
 
