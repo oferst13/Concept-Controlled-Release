@@ -72,7 +72,7 @@ pipe_alphas = (0.501 / manning) * (pipe_Ds ** (1 / 6)) * (pipe_slopes ** 0.5)
 c_pipes = pipes_L / dt
 
 rain = np.zeros(int(sim_days * 24 * 3600 / rain_dt))
-rainfile = '2hour-2.csv'
+rainfile = '1hour-2.csv'
 rain_input = np.genfromtxt(rainfile, delimiter=',')
 rain[:len(rain_input)] = rain_input
 
