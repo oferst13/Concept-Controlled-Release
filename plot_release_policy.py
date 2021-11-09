@@ -2,7 +2,9 @@ import best_sol_releases as source
 import numpy as np
 from matplotlib import pyplot as plt
 import benchmark as bm
+import plot_with_rain
 
+plt.figure()
 plt.rc('font', size=11)
 plot_hours = np.ceil(bm.zero_Q * source.dt / 3600)
 t = np.arange(plot_hours+1)
@@ -19,4 +21,5 @@ plt.legend(loc='upper left')
 #, bbox_to_anchor=(0.6,0))
 plt.xlabel('t (hours)')
 plt.ylabel('Valve Opening %')
+plt.xlim([0, plot_hours])
 plt.show()
