@@ -3,6 +3,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import benchmark as bm
 
+
 plt.rc('font', size=11)
 plot_hours = np.ceil(bm.zero_Q * source.dt / 3600)
 fig, axs = plt.subplots(2, 1, gridspec_kw={'height_ratios': [1, 2]})
@@ -35,4 +36,8 @@ axs[1].spines['top'].set_visible(False)
 axs[1].grid(True)
 fig.tight_layout(pad=0)
 plt.legend()
-plt.show(block=False)
+
+if __name__ == '__main__':
+    plt.show()
+else:
+    plt.show(block=False)
