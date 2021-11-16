@@ -7,7 +7,7 @@ import benchmark as bm
 plt.rc('font', size=11)
 plot_hours = np.ceil(bm.zero_Q * source.dt / 3600)
 fig, axs = plt.subplots(2, 1, gridspec_kw={'height_ratios': [1, 2]})
-fig.set_size_inches(6,4)
+fig.set_size_inches(6,3.75)
 axs[0].bar(source.rain_hours[np.nonzero(source.rain_hours <= plot_hours)],
            source.rain[0:len(source.rain_hours[np.nonzero(source.rain_hours <= plot_hours)])], width=source.rain_dt / 3600,
            align='edge')
