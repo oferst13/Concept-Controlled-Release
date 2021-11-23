@@ -6,7 +6,7 @@ import math
 from linetimer import CodeTimer
 
 splitted = bm.rainfile.split('.')
-X = np.genfromtxt(splitted[0]+'_releases1.'+splitted[1], delimiter=',')
+X = np.genfromtxt(splitted[0]+'_releases2.'+splitted[1], delimiter=',')
 release = np.array(X).copy()
 # xx = np.random.randint(11, size=len(X))
 # release = np.array(xx).copy()

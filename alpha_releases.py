@@ -4,6 +4,8 @@ from scipy import integrate
 import benchmark as bm
 import math
 import best_sol_releases as optim
+from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes
+from mpl_toolkits.axes_grid1.inset_locator import mark_inset
 
 
 def set_release():
@@ -29,7 +31,7 @@ rain_hours = np.linspace(0, int(sim_days * 24), int(sim_days * 24 * 3600 / rain_
 days = hours / 24
 
 tank_size = np.array([20, 20, 20])
-tank_storage = np.array([0, 0, 0], dtype=np.longfloat)
+tank_storage = bm.tank_init_storage.copy()
 roof = np.array([1000, 1000, 1000])
 dwellers = np.array([150, 150, 150])
 
@@ -78,7 +80,7 @@ rain[900:900 + max(np.shape(np.nonzero(rain)))] = rain[np.nonzero(rain)] * 0.5
 rain = bm.rain.copy()
 rain_volume = bm.rain_volume.copy()
 
-release_alphas = np.linspace(0, 0.8, 5)
+release_alphas = np.linspace(0, 0.9, num=10)
 to_min = 0
 penalty = 0
 alpha_Q = np.zeros((len(release_alphas), sim_len), dtype=np.longfloat)
@@ -88,6 +90,7 @@ for alpha_num, alpha in enumerate(release_alphas):
     overflows = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
     rainW_use = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
     tank_storage_all = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
+    tank_storage = bm.tank_init_storage.copy()
 
     outlet_A = np.zeros((len(tank_outlets), sim_len, 2), dtype=np.longfloat)
     outlet_Q = np.zeros((len(tank_outlets), sim_len), dtype=np.longfloat)
@@ -154,28 +157,37 @@ plt.ylabel('Q (' + r'$m^3$' + '/s)')
 plt.xlabel('t (hours)')
 plt.legend()
 '''
+
+alpha_Q_max = alpha_Q.max(axis=0)
+alpha_Q_min = alpha_Q.min(axis=0)
 plot_hours = np.ceil(bm.zero_Q * dt / 3600)
+hours_to_plot = hours[np.nonzero(hours <= plot_hours)]
 fig, axs = plt.subplots(2, 1, gridspec_kw={'height_ratios': [1, 2]})
 axs[0].bar(rain_hours[np.nonzero(rain_hours <= plot_hours)],
-           rain[0:len(rain_hours[np.nonzero(rain_hours <= plot_hours)])] * (3600 / rain_dt), width=rain_dt / 3600,
+           rain[0:len(rain_hours[np.nonzero(rain_hours <= plot_hours)])], width=rain_dt / 3600,
            align='edge')
 axs[0].spines['bottom'].set_visible(False)
 # axs[0].axes.xaxis.set_visible(False)
 axs[0].tick_params(labelbottom=False)
 axs[0].set_xlim([0, plot_hours])
 # axs[0].set_ylim([0,5])
-axs[0].set_ylabel('Rain (mm/hr)')
+axs[0].set_ylabel('Rain\n (mm/10-minutes)')
 axs[0].invert_yaxis()
 axs[0].grid(True)
-axs[1].plot(hours[np.nonzero(hours <= plot_hours)], optim.pipe_Q[2, 0:len(hours[np.nonzero(hours <= plot_hours)]), 1],
-            'b--', label="optimized outlet flow")
-axs[1].plot(hours[np.nonzero(hours <= plot_hours)], bm.pipe_Q[2, 0:len(hours[np.nonzero(hours <= plot_hours)]), 1],
-           'r-.', label="benchmark outlet flow")
+axs[1].plot(hours[np.nonzero(hours <= plot_hours)], bm.pipe_Q[2, 0:len(hours[np.nonzero(hours <= plot_hours)]), 1]*1000,
+           'r', label="Benchmark")
+axs[1].plot(hours[np.nonzero(hours <= plot_hours)], optim.pipe_Q[2, 0:len(hours[np.nonzero(hours <= plot_hours)]), 1]*1000,
+            'b', label="Controlled")
+axs[1].fill_between(hours[np.nonzero(hours <= plot_hours)],
+                    alpha_Q_max[0:len(hours[np.nonzero(hours <= plot_hours)])]*1000,
+                    alpha_Q_min[0:len(hours[np.nonzero(hours <= plot_hours)])]*1000, facecolor='dimgray', alpha=0.5, label='Alpha Flow Range')
+'''
 for alpha_num, alpha in enumerate(release_alphas):
     axs[1].plot(hours[np.nonzero(hours <= plot_hours)],
-                alpha_Q[alpha_num, 0:len(hours[np.nonzero(hours <= plot_hours)])],
+                alpha_Q[alpha_num, 0:len(hours[np.nonzero(hours <= plot_hours)])]*1000,
                 label=r'$\alpha$ = '+f'{alpha:0.1f}')
-axs[1].set_ylabel('Q (' + r'$m^3$' + '/s)')
+'''
+axs[1].set_ylabel('Outfall Flow Rate (LPS)')
 axs[1].set_xlabel('t (hours)')
 axs[1].set_xlim([0, plot_hours])
 axs[1].set_ylim(bottom=0)
@@ -183,6 +195,24 @@ axs[1].spines['top'].set_visible(False)
 axs[1].grid(True)
 fig.tight_layout(pad=0)
 plt.legend()
+x1 = 9.8
+x2 = 10.4
+y1 = 55
+y2 = 100
+axins = zoomed_inset_axes(axs[1], 2.2, loc=1) # zoom = 2
+axins.plot(hours[np.nonzero(hours <= plot_hours)], optim.pipe_Q[2, 0:len(hours[np.nonzero(hours <= plot_hours)]), 1]*1000,
+            'b', label="Controlled")
+axins.plot(hours[np.nonzero(hours <= plot_hours)], bm.pipe_Q[2, 0:len(hours[np.nonzero(hours <= plot_hours)]), 1]*1000,
+           'r', label="Benchmark")
+axins.fill_between(hours[np.nonzero(hours <= plot_hours)],
+                    alpha_Q_max[0:len(hours[np.nonzero(hours <= plot_hours)])]*1000,
+                    alpha_Q_min[0:len(hours[np.nonzero(hours <= plot_hours)])]*1000, facecolor='dimgray', alpha=0.5, label='Alpha Flow Range')
+axins.set_xlim(x1, x2)
+axins.set_ylim(y1, y2)
+plt.xticks(visible=False)
+plt.yticks(visible=False)
+mark_inset(axs[1], axins, loc1=2, loc2=3, fc="none", ec="0.6")
+
 plt.show()
 
 # plt.legend(line_objects, ('Pipe 1 - outflow', 'Pipe 2 - outflow', 'Pipe 3 - outflow', 'Pipe 1 - inflow', \
