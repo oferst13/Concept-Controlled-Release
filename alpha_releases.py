@@ -163,6 +163,7 @@ alpha_Q_min = alpha_Q.min(axis=0)
 plot_hours = np.ceil(bm.zero_Q * dt / 3600)
 hours_to_plot = hours[np.nonzero(hours <= plot_hours)]
 fig, axs = plt.subplots(2, 1, gridspec_kw={'height_ratios': [1, 2]})
+fig.set_size_inches(6,3.75)
 axs[0].bar(rain_hours[np.nonzero(rain_hours <= plot_hours)],
            rain[0:len(rain_hours[np.nonzero(rain_hours <= plot_hours)])], width=rain_dt / 3600,
            align='edge')
@@ -180,7 +181,7 @@ axs[1].plot(hours[np.nonzero(hours <= plot_hours)], optim.pipe_Q[2, 0:len(hours[
             'b', label="Controlled")
 axs[1].fill_between(hours[np.nonzero(hours <= plot_hours)],
                     alpha_Q_max[0:len(hours[np.nonzero(hours <= plot_hours)])]*1000,
-                    alpha_Q_min[0:len(hours[np.nonzero(hours <= plot_hours)])]*1000, facecolor='dimgray', alpha=0.5, label='Alpha Flow Range')
+                    alpha_Q_min[0:len(hours[np.nonzero(hours <= plot_hours)])]*1000, facecolor='limegreen', alpha=0.5, label=r'$\alpha$ Flow Range')
 '''
 for alpha_num, alpha in enumerate(release_alphas):
     axs[1].plot(hours[np.nonzero(hours <= plot_hours)],
@@ -195,8 +196,9 @@ axs[1].spines['top'].set_visible(False)
 axs[1].grid(True)
 fig.tight_layout(pad=0)
 plt.legend()
-x1 = 9.8
-x2 = 10.4
+'''
+x1 = 9.9
+x2 = 10.6
 y1 = 55
 y2 = 100
 axins = zoomed_inset_axes(axs[1], 2.2, loc=1) # zoom = 2
@@ -206,13 +208,13 @@ axins.plot(hours[np.nonzero(hours <= plot_hours)], bm.pipe_Q[2, 0:len(hours[np.n
            'r', label="Benchmark")
 axins.fill_between(hours[np.nonzero(hours <= plot_hours)],
                     alpha_Q_max[0:len(hours[np.nonzero(hours <= plot_hours)])]*1000,
-                    alpha_Q_min[0:len(hours[np.nonzero(hours <= plot_hours)])]*1000, facecolor='dimgray', alpha=0.5, label='Alpha Flow Range')
+                    alpha_Q_min[0:len(hours[np.nonzero(hours <= plot_hours)])]*1000, facecolor='limegreen', alpha=0.5)
 axins.set_xlim(x1, x2)
 axins.set_ylim(y1, y2)
 plt.xticks(visible=False)
 plt.yticks(visible=False)
-mark_inset(axs[1], axins, loc1=2, loc2=3, fc="none", ec="0.6")
-
+mark_inset(axs[1], axins, loc1=2, loc2=3, fc="none", ec="0.3")
+'''
 plt.show()
 
 # plt.legend(line_objects, ('Pipe 1 - outflow', 'Pipe 2 - outflow', 'Pipe 3 - outflow', 'Pipe 1 - inflow', \
