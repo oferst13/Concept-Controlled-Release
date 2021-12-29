@@ -1,5 +1,12 @@
 # Resources
 *.csv - rain files
+*_releases#.csv - optimized release policies - check prefix
+benchmark.py - run benchmark
+optimize.py - run GA for selected rain file
+plot_with_rain.py - run the selected release policy and plot
+swmm_compare.py - compare flow patterns of kinematic and dynamic wave
+plot_tank_storage.py - plot tank storage throughout the simulated event
+plot_release_policy.py - plot release policy throughout the simulated event
 
 
 Code for GA seeding:
