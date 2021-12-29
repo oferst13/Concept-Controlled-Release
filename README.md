@@ -1,4 +1,8 @@
 # Resources
+*.csv - rain files
+
+
+Code for GA seeding:
 pop=np.array([np.zeros(self.dim+1)]*self.pop_s)
         solo=np.zeros(self.dim+1)
         solo0=solo.copy()
