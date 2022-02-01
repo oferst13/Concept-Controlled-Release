@@ -1,6 +1,6 @@
 # Resources
-*.csv - rain files
-*_releases#.csv - optimized release policies - check prefix
+*.csv - rain files \n
+*_releases#.csv - optimized release policies - check prefix \n
 benchmark.py - run benchmark
 optimize.py - run GA for selected rain file
 plot_with_rain.py - run the selected release policy and plot
